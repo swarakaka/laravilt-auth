@@ -1,14 +1,72 @@
 {
-    "name": "{{ package }}",
+    "name": "@laravilt/auth",
     "version": "1.0.0",
-    "private": true,
+    "description": "Complete authentication system with 8 methods: login, registration, OTP, 2FA, password reset, social auth, passkeys, and magic links. Includes 20+ events, custom pages, and multi-panel support.",
+    "author": "Fady Mondy <info@3x1.io>",
+    "license": "MIT",
     "type": "module",
+    "main": "./dist/auth.umd.js",
+    "module": "./dist/auth.es.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/auth.es.js",
+            "require": "./dist/auth.umd.js"
+        },
+        "./style.css": "./dist/style.css"
+    },
+    "files": [
+        "dist",
+        "resources"
+    ],
+    "keywords": [
+        "laravilt",
+        "auth",
+        "authentication",
+        "login",
+        "registration",
+        "2fa",
+        "two-factor",
+        "otp",
+        "password-reset",
+        "social-auth",
+        "passkeys",
+        "webauthn",
+        "magic-links",
+        "vue",
+        "vue3",
+        "inertia",
+        "laravel",
+        "events"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/laravilt/auth"
+    },
+    "bugs": {
+        "url": "https://github.com/laravilt/auth/issues"
+    },
+    "homepage": "https://laravilt.dev/auth",
     "scripts": {
         "dev": "vite",
         "build": "vite build",
+        "build:types": "vue-tsc --declaration --emitDeclarationOnly --outDir dist resources/js/app.ts || true",
+        "build:npm": "npm run build",
+        "prepublishOnly": "npm run build:npm",
         "format": "prettier --write resources/",
         "format:check": "prettier --check resources/",
-        "lint": "eslint . --fix"
+        "lint": "eslint . --fix",
+        "test": "npx playwright test",
+        "test:headed": "npx playwright test --headed",
+        "test:ui": "npx playwright test --ui",
+        "test:debug": "npx playwright test --debug"
+    },
+    "peerDependencies": {
+        "@inertiajs/vue3": "^2.0.0",
+        "@laravilt/forms": "^1.0.0",
+        "@laravilt/actions": "^1.0.0",
+        "vue": "^3.3.0"
     },
     "devDependencies": {
         "@eslint/js": "^9.19.0",
@@ -25,12 +83,18 @@
         "typescript": "^5.2.2",
         "typescript-eslint": "^8.23.0",
         "vite": "^7.0.4",
-        "vue-tsc": "^2.2.4"
+        "vue-tsc": "^2.2.4",
+        "@vueuse/core": "^14.1.0",
+        "class-variance-authority": "^0.7.1",
+        "clsx": "^2.1.1",
+        "lucide-vue-next": "^0.555.0",
+        "radix-vue": "^1.9.17",
+        "reka-ui": "^2.6.1",
+        "tailwind-merge": "^3.4.0",
+        "vue": "^3.5.13"
     },
     "dependencies": {
-        "laravel-vite-plugin": "^2.0.0",
-        "tailwindcss": "^4.1.1",
-        "vue": "^3.5.13"
+        "tailwindcss": "^4.1.1"
     },
     "optionalDependencies": {
         "@rollup/rollup-linux-x64-gnu": "4.9.5",

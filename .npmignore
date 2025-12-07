@@ -1,0 +1,51 @@
+# Source files
+src/
+tests/
+database/
+lang/
+routes/
+config/
+arts/
+docs/
+
+# Build tools
+vite.config.ts
+vite.plugin.js
+tsconfig.json
+tsconfig.node.json
+phpunit.xml
+phpstan.neon
+testbench.yaml
+pint.json
+composer.json
+composer.lock
+
+# Development files
+.git/
+.github/
+.gitignore
+.editorconfig
+.prettierrc
+.eslintrc
+eslint.config.js
+prettier.config.js
+
+# Documentation (use npm package page instead)
+README.md
+CHANGELOG.md
+CODE_OF_CONDUCT.md
+CONTRIBUTING.md
+LICENSE.md
+
+# Test files
+*.test.ts
+*.test.js
+*.spec.ts
+*.spec.js
+
+# PHP files (this is a JavaScript package)
+*.php
+
+# Only include dist and resources in the package
+!dist/
+!resources/

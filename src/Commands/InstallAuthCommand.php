@@ -32,7 +32,7 @@ class InstallAuthCommand extends Command
         // Publish config
         $this->publishConfig();
 
-$this->publishAssets();
+        $this->publishAssets();
         if (! $this->option('without-migrations')) {
             $this->runMigrations();
         }
@@ -64,7 +64,8 @@ $this->publishAssets();
 
         Artisan::call('vendor:publish', $params, $this->output);
     }
-protected function publishAssets(): void
+
+    protected function publishAssets(): void
     {
         $this->info('Publishing assets...');
 
@@ -74,14 +75,18 @@ protected function publishAssets(): void
         ]);
 
         $this->components->success('Assets published successfully!');
-    }protected function runMigrations(): void
+    }
+
+    protected function runMigrations(): void
     {
         $this->info('Running migrations...');
 
         $this->call('migrate');
 
         $this->components->success('Migrations ran successfully!');
-    }protected function runSeeders(): void
+    }
+
+    protected function runSeeders(): void
     {
         $this->info('Running seeders...');
 
@@ -89,7 +94,9 @@ protected function publishAssets(): void
         // $this->call('db:seed', ['--class' => YourSeeder::class]);
 
         $this->components->success('Seeders ran successfully!');
-    }protected function buildAssets(): void
+    }
+
+    protected function buildAssets(): void
     {
         $this->info('Building assets...');
 
