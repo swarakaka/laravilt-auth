@@ -200,7 +200,7 @@ class LocaleTimezone extends Page
 
             $label = str_replace(['_', '/'], [' ', ' / '], $timezone);
 
-            if (!isset($grouped[$region])) {
+            if (! isset($grouped[$region])) {
                 $grouped[$region] = [
                     'region' => $region,
                     'timezones' => [],
@@ -216,7 +216,7 @@ class LocaleTimezone extends Page
         // Sort regions and their timezones
         ksort($grouped);
         foreach ($grouped as &$group) {
-            usort($group['timezones'], fn($a, $b) => $a['label'] <=> $b['label']);
+            usort($group['timezones'], fn ($a, $b) => $a['label'] <=> $b['label']);
         }
 
         return array_values($grouped);
