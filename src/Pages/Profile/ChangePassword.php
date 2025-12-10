@@ -14,7 +14,7 @@ use Laravilt\Panel\Pages\Page;
 
 class ChangePassword extends Page
 {
-    protected static ?string $title = 'Change Password';
+    protected static ?string $title = null;
 
     protected static ?string $cluster = Settings::class;
 
@@ -22,14 +22,19 @@ class ChangePassword extends Page
 
     protected static bool $shouldRegisterNavigation = false;
 
+    public static function getTitle(): string
+    {
+        return __('laravilt-auth::auth.profile.password.title');
+    }
+
     public function getHeading(): string
     {
-        return 'Change Password';
+        return __('laravilt-auth::auth.profile.password.title');
     }
 
     public function getSubheading(): ?string
     {
-        return 'Update your password to keep your account secure.';
+        return __('laravilt-auth::auth.profile.password.description');
     }
 
     public function getLayout(): string
@@ -42,22 +47,22 @@ class ChangePassword extends Page
         return [
             TextInput::make('current_password')
                 ->password()
-                ->label('Current Password')
+                ->label(__('laravilt-auth::auth.fields.current_password'))
                 ->required()
-                ->placeholder('Enter your current password'),
+                ->placeholder(__('laravilt-auth::auth.profile.password.current_placeholder')),
 
             TextInput::make('password')
                 ->password()
-                ->label('New Password')
+                ->label(__('laravilt-auth::auth.fields.new_password'))
                 ->required()
-                ->placeholder('Enter your new password')
+                ->placeholder(__('laravilt-auth::auth.profile.password.new_placeholder'))
                 ->rules(['required', Password::defaults()]),
 
             TextInput::make('password_confirmation')
                 ->password()
-                ->label('Confirm New Password')
+                ->label(__('laravilt-auth::auth.fields.new_password_confirmation'))
                 ->required()
-                ->placeholder('Confirm your new password'),
+                ->placeholder(__('laravilt-auth::auth.profile.password.confirm_placeholder')),
         ];
     }
 
@@ -65,7 +70,7 @@ class ChangePassword extends Page
     {
         return [
             Action::make('update-password')
-                ->label('Update Password')
+                ->label(__('laravilt-auth::auth.profile.password.update'))
                 ->action(function (array $data) {
                     return $this->updatePassword($data);
                 }),
@@ -93,7 +98,7 @@ class ChangePassword extends Page
         // Check if current password is correct
         if (! Hash::check($validated['current_password'], $user->password)) {
             return back()->withErrors([
-                'current_password' => 'The current password is incorrect.',
+                'current_password' => __('laravilt-auth::auth.profile.password.current_incorrect'),
             ]);
         }
 
@@ -102,7 +107,7 @@ class ChangePassword extends Page
             'password' => Hash::make($validated['password']),
         ]);
 
-        notify('Password updated successfully.');
+        notify(__('laravilt-auth::auth.profile.page.password_updated'));
 
         return back();
     }

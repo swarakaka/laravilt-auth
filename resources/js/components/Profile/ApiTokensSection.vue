@@ -7,6 +7,10 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import Modal from '@laravilt/support/components/Modal.vue';
 import { useApiTokens } from '../../composables/useApiTokens';
+import { useLocalization } from '@/composables/useLocalization';
+
+// Initialize localization
+const { trans } = useLocalization();
 
 const showModal = ref(false);
 const showTokenCreated = ref(false);
@@ -34,7 +38,7 @@ const handleCreateToken = async () => {
 };
 
 const handleDeleteToken = async (tokenId: number) => {
-    if (!confirm('Are you sure you want to delete this token? This action cannot be undone.')) {
+    if (!confirm(trans('profile.api_tokens.confirm_delete'))) {
         return;
     }
 
@@ -73,36 +77,36 @@ const toggleAbility = (ability: string) => {
 <template>
     <Card>
         <CardHeader>
-            <CardTitle>API Tokens</CardTitle>
+            <CardTitle>{{ trans('profile.api_tokens.title') }}</CardTitle>
             <CardDescription>
-                Create and manage API tokens for accessing your account programmatically.
+                {{ trans('profile.api_tokens.description') }}
             </CardDescription>
         </CardHeader>
         <CardContent>
             <p class="text-sm text-muted-foreground">
-                API tokens allow you to interact with the application through API requests.
+                {{ trans('profile.api_tokens.info') }}
             </p>
             <div class="mt-4 flex justify-end">
-                <Button @click="handleOpenModal">Manage Tokens</Button>
+                <Button @click="handleOpenModal">{{ trans('profile.api_tokens.manage') }}</Button>
             </div>
         </CardContent>
     </Card>
 
     <!-- API Tokens Modal -->
-    <Modal v-model:open="showModal" title="API Tokens" description="Create and manage API tokens" @close="handleCloseModal">
+    <Modal v-model:open="showModal" :title="trans('profile.api_tokens.title')" :description="trans('profile.api_tokens.modal_description')" @close="handleCloseModal">
         <div v-if="!showTokenCreated" class="space-y-4">
             <p class="text-sm text-muted-foreground">
-                API tokens allow third-party services to authenticate with our application on your behalf.
+                {{ trans('profile.api_tokens.third_party_info') }}
             </p>
 
             <!-- Token List -->
             <div v-if="apiTokens.loading.value && apiTokens.tokens.value.length === 0" class="py-8 text-center">
                 <div class="inline-block size-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent"></div>
-                <p class="mt-2 text-sm text-muted-foreground">Loading tokens...</p>
+                <p class="mt-2 text-sm text-muted-foreground">{{ trans('profile.api_tokens.loading') }}</p>
             </div>
 
             <div v-else-if="apiTokens.tokens.value.length > 0" class="space-y-2">
-                <p class="text-sm font-medium">Your Tokens</p>
+                <p class="text-sm font-medium">{{ trans('profile.api_tokens.your_tokens') }}</p>
                 <div
                     v-for="token in apiTokens.tokens.value"
                     :key="token.id"
@@ -111,9 +115,9 @@ const toggleAbility = (ability: string) => {
                     <div class="flex-1">
                         <p class="text-sm font-medium">{{ token.name }}</p>
                         <p class="text-xs text-muted-foreground">
-                            Abilities: {{ token.abilities.join(', ') }}
-                            <span v-if="token.last_used_at"> • Last used {{ token.last_used_at }}</span>
-                            <span v-else> • Never used</span>
+                            {{ trans('profile.api_tokens.abilities') }}: {{ token.abilities.join(', ') }}
+                            <span v-if="token.last_used_at"> • {{ trans('profile.api_tokens.last_used') }} {{ token.last_used_at }}</span>
+                            <span v-else> • {{ trans('profile.api_tokens.never_used') }}</span>
                         </p>
                     </div>
                     <Button
@@ -122,31 +126,31 @@ const toggleAbility = (ability: string) => {
                         @click="handleDeleteToken(token.id)"
                         :disabled="apiTokens.loading.value"
                     >
-                        Delete
+                        {{ trans('common.delete') }}
                     </Button>
                 </div>
             </div>
 
             <div v-else class="text-center py-4 text-sm text-muted-foreground">
-                No API tokens created yet.
+                {{ trans('profile.api_tokens.no_tokens') }}
             </div>
 
             <!-- Create Token Form -->
             <div class="space-y-4 pt-4 border-t">
-                <p class="text-sm font-medium">Create New Token</p>
+                <p class="text-sm font-medium">{{ trans('profile.api_tokens.create_new') }}</p>
 
                 <div class="space-y-2">
-                    <Label for="token-name">Token Name</Label>
+                    <Label for="token-name">{{ trans('profile.api_tokens.token_name') }}</Label>
                     <Input
                         id="token-name"
                         v-model="tokenName"
                         type="text"
-                        placeholder="My Application"
+                        :placeholder="trans('profile.api_tokens.token_name_placeholder')"
                     />
                 </div>
 
                 <div class="space-y-2">
-                    <Label>Permissions</Label>
+                    <Label>{{ trans('profile.api_tokens.permissions') }}</Label>
                     <div class="space-y-2">
                         <div class="flex items-center space-x-2">
                             <Checkbox
@@ -154,7 +158,7 @@ const toggleAbility = (ability: string) => {
                                 :checked="tokenAbilities.includes('read')"
                                 @update:checked="() => toggleAbility('read')"
                             />
-                            <Label for="read" class="font-normal cursor-pointer">Read</Label>
+                            <Label for="read" class="font-normal cursor-pointer">{{ trans('profile.api_tokens.permission_read') }}</Label>
                         </div>
                         <div class="flex items-center space-x-2">
                             <Checkbox
@@ -162,7 +166,7 @@ const toggleAbility = (ability: string) => {
                                 :checked="tokenAbilities.includes('create')"
                                 @update:checked="() => toggleAbility('create')"
                             />
-                            <Label for="create" class="font-normal cursor-pointer">Create</Label>
+                            <Label for="create" class="font-normal cursor-pointer">{{ trans('profile.api_tokens.permission_create') }}</Label>
                         </div>
                         <div class="flex items-center space-x-2">
                             <Checkbox
@@ -170,7 +174,7 @@ const toggleAbility = (ability: string) => {
                                 :checked="tokenAbilities.includes('update')"
                                 @update:checked="() => toggleAbility('update')"
                             />
-                            <Label for="update" class="font-normal cursor-pointer">Update</Label>
+                            <Label for="update" class="font-normal cursor-pointer">{{ trans('profile.api_tokens.permission_update') }}</Label>
                         </div>
                         <div class="flex items-center space-x-2">
                             <Checkbox
@@ -178,7 +182,7 @@ const toggleAbility = (ability: string) => {
                                 :checked="tokenAbilities.includes('delete')"
                                 @update:checked="() => toggleAbility('delete')"
                             />
-                            <Label for="delete" class="font-normal cursor-pointer">Delete</Label>
+                            <Label for="delete" class="font-normal cursor-pointer">{{ trans('profile.api_tokens.permission_delete') }}</Label>
                         </div>
                     </div>
                 </div>
@@ -193,15 +197,15 @@ const toggleAbility = (ability: string) => {
         <div v-else class="space-y-4">
             <div class="rounded-lg bg-amber-50 dark:bg-amber-950 p-4">
                 <p class="text-sm font-medium text-amber-900 dark:text-amber-100">
-                    Save your token now!
+                    {{ trans('profile.api_tokens.save_token') }}
                 </p>
                 <p class="text-xs text-amber-700 dark:text-amber-300 mt-1">
-                    For security reasons, this token will only be shown once. Make sure to copy it now.
+                    {{ trans('profile.api_tokens.save_token_warning') }}
                 </p>
             </div>
 
             <div class="space-y-2">
-                <Label>Your new API token</Label>
+                <Label>{{ trans('profile.api_tokens.new_token') }}</Label>
                 <div class="flex items-center gap-2">
                     <Input
                         :model-value="apiTokens.newToken.value?.plain_text_token"
@@ -222,21 +226,21 @@ const toggleAbility = (ability: string) => {
         </div>
 
         <template #footer>
-            <Button variant="outline" @click="handleCloseModal">Close</Button>
+            <Button variant="outline" @click="handleCloseModal">{{ trans('common.close') }}</Button>
 
             <Button
                 v-if="!showTokenCreated"
                 @click="handleCreateToken"
                 :disabled="apiTokens.loading.value || !tokenName || tokenAbilities.length === 0"
             >
-                {{ apiTokens.loading.value ? 'Creating...' : 'Create Token' }}
+                {{ apiTokens.loading.value ? trans('profile.api_tokens.creating') : trans('profile.api_tokens.create') }}
             </Button>
 
             <Button
                 v-else
                 @click="handleCloseTokenCreated"
             >
-                I've Copied My Token
+                {{ trans('profile.api_tokens.copied_token') }}
             </Button>
         </template>
     </Modal>

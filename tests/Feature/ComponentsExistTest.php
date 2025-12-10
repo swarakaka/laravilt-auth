@@ -97,7 +97,6 @@ class ComponentsExistTest extends TestCase
     public function test_vue_components_exist()
     {
         $files = [
-            __DIR__.'/../../resources/js/Pages/AuthPage.vue',
             __DIR__.'/../../resources/js/Pages/ProfilePage.vue',
             __DIR__.'/../../resources/js/Pages/TwoFactorChallengePage.vue',
             __DIR__.'/../../resources/js/Pages/ManageTwoFactorPage.vue',

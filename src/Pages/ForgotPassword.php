@@ -12,18 +12,23 @@ use Laravilt\Panel\Pages\Page;
 
 class ForgotPassword extends Page
 {
-    protected static ?string $title = 'Forgot Password';
+    protected static ?string $title = null;
 
     protected static bool $shouldRegisterNavigation = false;
 
+    public static function getTitle(): string
+    {
+        return __('laravilt-auth::auth.forgot_password.title');
+    }
+
     public function getHeading(): string
     {
-        return 'Forgot Password';
+        return __('laravilt-auth::auth.forgot_password.heading');
     }
 
     public function getSubheading(): ?string
     {
-        return 'Enter your email to receive a password reset link.';
+        return __('laravilt-auth::auth.forgot_password.subheading');
     }
 
     public function getLayout(): string
@@ -47,7 +52,7 @@ class ForgotPassword extends Page
     {
         return [
             TextInput::make('email')
-                ->label('Email')
+                ->label(__('laravilt-auth::auth.fields.email'))
                 ->email()
                 ->required()
                 ->autofocus()
@@ -59,7 +64,7 @@ class ForgotPassword extends Page
     {
         return [
             Action::make('send-reset-link')
-                ->label('Send Reset Link')
+                ->label(__('laravilt-auth::auth.forgot_password.button'))
                 ->preserveState(false)
                 ->preserveScroll(false)
                 ->action(function (array $data) {
@@ -126,7 +131,7 @@ class ForgotPassword extends Page
                 $panel->getId()
             );
 
-            $message = 'Password reset link has been sent to your email!';
+            $message = __('laravilt-auth::auth.forgot_password.email_sent');
 
             // Add notification for success
             session()->flash('notifications', [[

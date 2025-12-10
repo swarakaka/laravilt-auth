@@ -1,11 +1,22 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import SettingsLayout from '@laravilt/panel/layouts/SettingsLayout.vue';
 import ActionButton from '@laravilt/actions/components/ActionButton.vue';
 import { Key, Copy, CheckCircle2, AlertCircle } from 'lucide-vue-next';
+import { useLocalization } from '@/composables/useLocalization';
+
+const { trans } = useLocalization();
+
+const isLoading = ref(true);
+
+onMounted(() => {
+    setTimeout(() => {
+        isLoading.value = false;
+    }, 100);
+});
 
 interface PageData {
     heading: string;
@@ -24,8 +35,14 @@ interface Token {
     deleteAction: any;
 }
 
+interface BreadcrumbItem {
+    label: string;
+    url: string | null;
+}
+
 const props = defineProps<{
     page: PageData;
+    breadcrumbs?: BreadcrumbItem[];
     createAction: any;
     revokeAllAction: any;
     tokens: Token[];
@@ -36,6 +53,15 @@ const props = defineProps<{
     clusterTitle?: string;
     clusterDescription?: string;
 }>();
+
+// Transform breadcrumbs to frontend format
+const transformedBreadcrumbs = computed(() => {
+    if (!props.breadcrumbs) return [];
+    return props.breadcrumbs.map(item => ({
+        title: item.label,
+        href: item.url || '#',
+    }));
+});
 
 const copiedToken = ref(false);
 
@@ -58,9 +84,11 @@ const copyToken = async () => {
     <Head :title="page.heading" />
 
     <SettingsLayout
+        :breadcrumbs="transformedBreadcrumbs"
         :navigation="clusterNavigation"
         :title="clusterTitle"
         :description="clusterDescription"
+        :loading="isLoading"
     >
         <section class="max-w-2xl space-y-6">
             <!-- Page Header -->
@@ -85,10 +113,10 @@ const copyToken = async () => {
                 <div class="rounded-lg border border-green-200 bg-green-50 p-6 dark:border-green-900 dark:bg-green-950">
                     <div class="flex items-center gap-2 mb-2">
                         <CheckCircle2 class="h-5 w-5 text-green-600 dark:text-green-400" />
-                        <h4 class="font-medium text-green-900 dark:text-green-100">Token Created Successfully</h4>
+                        <h4 class="font-medium text-green-900 dark:text-green-100">{{ trans('laravilt-auth::auth.profile.api_tokens.token_created') }}</h4>
                     </div>
                     <p class="text-sm text-green-800 dark:text-green-200 mb-4">
-                        Make sure to copy your token now. You won't be able to see it again!
+                        {{ trans('laravilt-auth::auth.profile.api_tokens.copy_token_warning') }}
                     </p>
                     <div class="flex items-center gap-2">
                         <code class="flex-1 rounded bg-white dark:bg-gray-900 px-3 py-2 text-sm font-mono border">
@@ -109,10 +137,10 @@ const copyToken = async () => {
                     <AlertCircle class="h-5 w-5 text-yellow-600 dark:text-yellow-500 mt-0.5" />
                     <div>
                         <p class="font-medium text-yellow-900 dark:text-yellow-100">
-                            Token Limit Reached
+                            {{ trans('laravilt-auth::auth.profile.api_tokens.limit_reached') }}
                         </p>
                         <p class="text-sm text-yellow-800 dark:text-yellow-200">
-                            You have reached the maximum of {{ maxTokens }} tokens. Revoke a token to create a new one.
+                            {{ trans('laravilt-auth::auth.profile.api_tokens.limit_reached_desc', { max: maxTokens }) }}
                         </p>
                     </div>
                 </div>
@@ -122,9 +150,9 @@ const copyToken = async () => {
             <!-- Empty State -->
             <div v-if="tokens.length === 0" class="flex flex-col items-center justify-center py-12">
                 <Key class="h-12 w-12 text-muted-foreground/50 mb-4" />
-                <p class="text-lg font-medium mb-1">No API tokens yet</p>
+                <p class="text-lg font-medium mb-1">{{ trans('laravilt-auth::auth.profile.api_tokens.no_tokens_yet') }}</p>
                 <p class="text-sm text-muted-foreground mb-4">
-                    Create your first token to get started
+                    {{ trans('laravilt-auth::auth.profile.api_tokens.create_first') }}
                 </p>
             </div>
 
@@ -136,10 +164,10 @@ const copyToken = async () => {
                             <div class="flex items-center gap-2 mb-2">
                                 <h4 class="font-medium">{{ token.name }}</h4>
                                 <Badge v-if="token.is_expired" variant="destructive">
-                                    Expired
+                                    {{ trans('laravilt-auth::auth.profile.api_tokens.expired') }}
                                 </Badge>
                                 <Badge v-else-if="token.expires_at" variant="outline">
-                                    Expires {{ token.expires_at_human }}
+                                    {{ trans('laravilt-auth::auth.profile.api_tokens.expires') }} {{ token.expires_at_human }}
                                 </Badge>
                             </div>
 
@@ -150,16 +178,16 @@ const copyToken = async () => {
                                     variant="secondary"
                                     class="text-xs"
                                 >
-                                    {{ ability === '*' ? 'Full Access' : availableAbilities[ability] || ability }}
+                                    {{ ability === '*' ? trans('laravilt-auth::auth.profile.api_tokens.full_access') : availableAbilities[ability] || ability }}
                                 </Badge>
                             </div>
 
                             <div class="flex gap-4 text-xs text-muted-foreground">
-                                <span>Created {{ token.created_at }}</span>
+                                <span>{{ trans('laravilt-auth::auth.profile.api_tokens.created') }} {{ token.created_at }}</span>
                                 <span v-if="token.last_used_at">
-                                    Last used {{ token.last_used_at }}
+                                    {{ trans('laravilt-auth::auth.profile.api_tokens.last_used') }} {{ token.last_used_at }}
                                 </span>
-                                <span v-else>Never used</span>
+                                <span v-else>{{ trans('laravilt-auth::auth.profile.api_tokens.never_used') }}</span>
                             </div>
                         </div>
 
@@ -173,9 +201,9 @@ const copyToken = async () => {
             <!-- Revoke All Tokens -->
             <div v-if="tokens.length > 1" class="pt-6 border-t">
                 <div class="mb-4">
-                    <h4 class="font-medium mb-1">Revoke All Tokens</h4>
+                    <h4 class="font-medium mb-1">{{ trans('laravilt-auth::auth.profile.api_tokens.revoke_all') }}</h4>
                     <p class="text-sm text-muted-foreground">
-                        This will revoke all active tokens. Applications using these tokens will lose access.
+                        {{ trans('laravilt-auth::auth.profile.api_tokens.revoke_all_warning') }}
                     </p>
                 </div>
 

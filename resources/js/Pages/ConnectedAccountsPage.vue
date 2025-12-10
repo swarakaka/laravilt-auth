@@ -1,11 +1,20 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
+import { ref, onMounted, computed } from 'vue';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import ActionButton from '@laravilt/actions/components/ActionButton.vue';
 import SettingsLayout from '@laravilt/panel/layouts/SettingsLayout.vue';
 import { Github, Mail, Facebook, Twitter, Linkedin, Link as LinkIcon } from 'lucide-vue-next';
+
+const isLoading = ref(true);
+
+onMounted(() => {
+    setTimeout(() => {
+        isLoading.value = false;
+    }, 100);
+});
 
 interface PageData {
     heading: string;
@@ -31,13 +40,28 @@ interface Provider {
     disconnectAction?: any;
 }
 
+interface BreadcrumbItem {
+    label: string;
+    url: string | null;
+}
+
 const props = defineProps<{
     page: PageData;
+    breadcrumbs?: BreadcrumbItem[];
     providers: Provider[];
     clusterNavigation?: any[];
     clusterTitle?: string;
     clusterDescription?: string;
 }>();
+
+// Transform breadcrumbs to frontend format
+const transformedBreadcrumbs = computed(() => {
+    if (!props.breadcrumbs) return [];
+    return props.breadcrumbs.map(item => ({
+        title: item.label,
+        href: item.url || '#',
+    }));
+});
 
 const getProviderIcon = (provider: string) => {
     const icons: Record<string, any> = {
@@ -55,9 +79,11 @@ const getProviderIcon = (provider: string) => {
     <Head :title="page.heading" />
 
     <SettingsLayout
+        :breadcrumbs="transformedBreadcrumbs"
         :navigation="clusterNavigation"
         :title="clusterTitle"
         :description="clusterDescription"
+        :loading="isLoading"
     >
         <section class="max-w-2xl">
             <!-- Page Header -->

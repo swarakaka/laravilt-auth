@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -14,6 +14,17 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import SettingsLayout from '@laravilt/panel/layouts/SettingsLayout.vue';
 import { Fingerprint, Trash2, AlertCircle, Key, Plus } from 'lucide-vue-next';
+import { useLocalization } from '@/composables/useLocalization';
+
+const { trans } = useLocalization();
+
+const isPageLoading = ref(true);
+
+onMounted(() => {
+    setTimeout(() => {
+        isPageLoading.value = false;
+    }, 100);
+});
 
 interface PageData {
     heading: string;
@@ -28,8 +39,14 @@ interface Passkey {
     deleteAction?: any;
 }
 
+interface BreadcrumbItem {
+    label: string;
+    url: string | null;
+}
+
 const props = defineProps<{
     page: PageData;
+    breadcrumbs?: BreadcrumbItem[];
     passkeys: Passkey[];
     registerOptionsUrl: string;
     registerUrl: string;
@@ -39,6 +56,15 @@ const props = defineProps<{
     clusterTitle?: string;
     clusterDescription?: string;
 }>();
+
+// Transform breadcrumbs to frontend format
+const transformedBreadcrumbs = computed(() => {
+    if (!props.breadcrumbs) return [];
+    return props.breadcrumbs.map(item => ({
+        title: item.label,
+        href: item.url || '#',
+    }));
+});
 
 const showModal = ref(false);
 const passkeyName = ref('');
@@ -149,7 +175,7 @@ function arrayBufferToBase64url(buffer: ArrayBuffer): string {
 }
 
 const removePasskey = (passkeyId: string) => {
-    if (confirm('Are you sure you want to remove this passkey?')) {
+    if (confirm(trans('laravilt-auth::auth.profile.passkeys.confirm_delete'))) {
         router.delete(`${props.registerUrl.replace('/register', '')}/${passkeyId}`, {
             preserveState: false,
             preserveScroll: false,
@@ -162,9 +188,11 @@ const removePasskey = (passkeyId: string) => {
     <Head :title="page.heading" />
 
     <SettingsLayout
+        :breadcrumbs="transformedBreadcrumbs"
         :navigation="clusterNavigation"
         :title="clusterTitle"
         :description="clusterDescription"
+        :loading="isPageLoading"
     >
         <section class="max-w-2xl space-y-6">
             <!-- Page Header -->
@@ -184,7 +212,7 @@ const removePasskey = (passkeyId: string) => {
                         :disabled="!canRegister || passkeys.length >= maxPasskeys"
                     >
                         <Plus class="h-4 w-4 mr-2" />
-                        Register New Passkey
+                        {{ trans('laravilt-auth::auth.profile.passkeys.register_new') }}
                     </Button>
 
                     <DialogContent>
@@ -192,23 +220,23 @@ const removePasskey = (passkeyId: string) => {
                             <div class="flex items-center justify-center w-12 h-12 mb-4 rounded-full bg-primary/10">
                                 <Key class="h-6 w-6 text-primary" />
                             </div>
-                            <DialogTitle>Register New Passkey</DialogTitle>
+                            <DialogTitle>{{ trans('laravilt-auth::auth.profile.passkeys.register_title') }}</DialogTitle>
                             <DialogDescription>
-                                Enter a name for this passkey to help you identify it later.
+                                {{ trans('laravilt-auth::auth.profile.passkeys.register_description') }}
                             </DialogDescription>
                         </DialogHeader>
 
                         <div class="space-y-4 py-4">
                             <div class="space-y-2">
-                                <Label for="passkey-name">Passkey Name</Label>
+                                <Label for="passkey-name">{{ trans('laravilt-auth::auth.profile.passkeys.passkey_name') }}</Label>
                                 <Input
                                     id="passkey-name"
                                     v-model="passkeyName"
-                                    placeholder="My Device"
+                                    :placeholder="trans('laravilt-auth::auth.profile.passkeys.name_placeholder')"
                                     @keyup.enter="handlePasskeyRegistration"
                                 />
                                 <p class="text-sm text-muted-foreground">
-                                    This name will help you identify this passkey later.
+                                    {{ trans('laravilt-auth::auth.profile.passkeys.name_hint') }}
                                 </p>
                             </div>
 
@@ -218,13 +246,13 @@ const removePasskey = (passkeyId: string) => {
                                     @click="showModal = false"
                                     :disabled="isLoading"
                                 >
-                                    Cancel
+                                    {{ trans('laravilt-auth::auth.common.cancel') }}
                                 </Button>
                                 <Button
                                     @click="handlePasskeyRegistration"
                                     :disabled="isLoading || !passkeyName.trim()"
                                 >
-                                    {{ isLoading ? 'Registering...' : 'Register Passkey' }}
+                                    {{ isLoading ? trans('laravilt-auth::auth.profile.passkeys.registering') : trans('laravilt-auth::auth.profile.passkeys.register') }}
                                 </Button>
                             </div>
                         </div>
@@ -235,15 +263,15 @@ const removePasskey = (passkeyId: string) => {
             <!-- Info Alert -->
             <div>
                 <Card class="border-blue-200 bg-blue-50 dark:border-blue-900 dark:bg-blue-950">
-                    <CardContent class="pt-6">
+                    <CardContent>
                         <div class="flex items-start gap-2">
                             <Fingerprint class="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
                             <div>
                                 <p class="font-medium text-blue-900 dark:text-blue-100 mb-1">
-                                    What are Passkeys?
+                                    {{ trans('laravilt-auth::auth.profile.passkeys.what_are_passkeys') }}
                                 </p>
                                 <p class="text-sm text-blue-800 dark:text-blue-200">
-                                    Passkeys are a secure, passwordless way to sign in using your device's biometric authentication (Face ID, Touch ID, Windows Hello) or a security key.
+                                    {{ trans('laravilt-auth::auth.profile.passkeys.what_are_passkeys_desc') }}
                                 </p>
                             </div>
                         </div>
@@ -259,10 +287,10 @@ const removePasskey = (passkeyId: string) => {
                             <AlertCircle class="h-5 w-5 text-yellow-600 dark:text-yellow-500 mt-0.5" />
                             <div>
                                 <p class="font-medium text-yellow-900 dark:text-yellow-100">
-                                    Passkey Limit Reached
+                                    {{ trans('laravilt-auth::auth.profile.passkeys.limit_reached') }}
                                 </p>
                                 <p class="text-sm text-yellow-800 dark:text-yellow-200">
-                                    You have reached the maximum of {{ maxPasskeys }} passkeys. Remove a passkey to add a new one.
+                                    {{ trans('laravilt-auth::auth.profile.passkeys.limit_reached_desc', { max: maxPasskeys }) }}
                                 </p>
                             </div>
                         </div>
@@ -275,9 +303,9 @@ const removePasskey = (passkeyId: string) => {
                 <Card>
                     <CardContent class="flex flex-col items-center justify-center py-12">
                         <Fingerprint class="h-12 w-12 text-muted-foreground/50 mb-4" />
-                        <p class="text-lg font-medium mb-1">No passkeys yet</p>
+                        <p class="text-lg font-medium mb-1">{{ trans('laravilt-auth::auth.profile.passkeys.no_passkeys_yet') }}</p>
                         <p class="text-sm text-muted-foreground mb-4">
-                            Add a passkey for secure, passwordless authentication
+                            {{ trans('laravilt-auth::auth.profile.passkeys.add_passkey_desc') }}
                         </p>
                     </CardContent>
                 </Card>
@@ -295,11 +323,11 @@ const removePasskey = (passkeyId: string) => {
                                 <div class="flex-1">
                                     <h4 class="font-medium mb-1">{{ passkey.name }}</h4>
                                     <div class="flex gap-4 text-xs text-muted-foreground">
-                                        <span>Added {{ passkey.created_at }}</span>
+                                        <span>{{ trans('laravilt-auth::auth.profile.passkeys.added') }} {{ passkey.created_at }}</span>
                                         <span v-if="passkey.last_used_at">
-                                            Last used {{ passkey.last_used_at }}
+                                            {{ trans('laravilt-auth::auth.profile.passkeys.last_used') }} {{ passkey.last_used_at }}
                                         </span>
-                                        <span v-else>Never used</span>
+                                        <span v-else>{{ trans('laravilt-auth::auth.profile.passkeys.never_used') }}</span>
                                     </div>
                                 </div>
                             </div>

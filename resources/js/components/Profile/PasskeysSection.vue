@@ -6,6 +6,10 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import Modal from '@laravilt/support/components/Modal.vue';
 import { usePasskeys } from '../../composables/usePasskeys';
+import { useLocalization } from '@/composables/useLocalization';
+
+// Initialize localization
+const { trans } = useLocalization();
 
 const showModal = ref(false);
 const showRegisterModal = ref(false);
@@ -58,7 +62,7 @@ const handleRegisterPasskey = async () => {
 };
 
 const handleDeletePasskey = async (passkeyId: string) => {
-    if (!confirm('Are you sure you want to delete this passkey? You will no longer be able to use it to sign in.')) {
+    if (!confirm(trans('profile.passkeys.confirm_delete'))) {
         return;
     }
 
@@ -82,37 +86,37 @@ const handleCloseRegisterModal = () => {
 <template>
     <Card>
         <CardHeader>
-            <CardTitle>Passkeys</CardTitle>
+            <CardTitle>{{ trans('profile.passkeys.title') }}</CardTitle>
             <CardDescription>
-                Use passkeys for secure, passwordless authentication on supported devices.
+                {{ trans('profile.passkeys.description') }}
             </CardDescription>
         </CardHeader>
         <CardContent>
             <p class="text-sm text-muted-foreground">
-                Passkeys provide a more secure and convenient way to sign in without a password.
+                {{ trans('profile.passkeys.info') }}
             </p>
             <div class="mt-4 flex justify-end">
-                <Button @click="handleOpenModal">Manage Passkeys</Button>
+                <Button @click="handleOpenModal">{{ trans('profile.passkeys.manage') }}</Button>
             </div>
         </CardContent>
     </Card>
 
     <!-- Passkeys Modal -->
-    <Modal v-model:open="showModal" title="Passkeys" description="Manage your passkeys for passwordless authentication" @close="handleCloseModal">
+    <Modal v-model:open="showModal" :title="trans('profile.passkeys.title')" :description="trans('profile.passkeys.modal_description')" @close="handleCloseModal">
         <div class="space-y-4">
             <p class="text-sm text-muted-foreground">
-                Passkeys are a secure and convenient way to sign in without a password. They use your device's biometric authentication or PIN.
+                {{ trans('profile.passkeys.biometric_info') }}
             </p>
 
             <!-- Loading State -->
             <div v-if="passkeys.loading.value && passkeys.passkeys.value.length === 0" class="py-8 text-center">
                 <div class="inline-block size-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent"></div>
-                <p class="mt-2 text-sm text-muted-foreground">Loading passkeys...</p>
+                <p class="mt-2 text-sm text-muted-foreground">{{ trans('profile.passkeys.loading') }}</p>
             </div>
 
             <!-- Passkeys List -->
             <div v-else-if="passkeys.passkeys.value.length > 0" class="space-y-2">
-                <p class="text-sm font-medium">Your Passkeys</p>
+                <p class="text-sm font-medium">{{ trans('profile.passkeys.your_passkeys') }}</p>
                 <div
                     v-for="passkey in passkeys.passkeys.value"
                     :key="passkey.id"
@@ -126,9 +130,9 @@ const handleCloseRegisterModal = () => {
                     <div class="flex-1">
                         <p class="text-sm font-medium">{{ passkey.name }}</p>
                         <p class="text-xs text-muted-foreground">
-                            Created {{ passkey.created_at }}
-                            <span v-if="passkey.last_used_at"> • Last used {{ passkey.last_used_at }}</span>
-                            <span v-else> • Never used</span>
+                            {{ trans('profile.passkeys.created') }} {{ passkey.created_at }}
+                            <span v-if="passkey.last_used_at"> • {{ trans('profile.passkeys.last_used') }} {{ passkey.last_used_at }}</span>
+                            <span v-else> • {{ trans('profile.passkeys.never_used') }}</span>
                         </p>
                     </div>
                     <Button
@@ -137,13 +141,13 @@ const handleCloseRegisterModal = () => {
                         @click="handleDeletePasskey(passkey.id)"
                         :disabled="passkeys.loading.value"
                     >
-                        Delete
+                        {{ trans('common.delete') }}
                     </Button>
                 </div>
             </div>
 
             <div v-else class="text-center py-4 text-sm text-muted-foreground">
-                No passkeys registered yet.
+                {{ trans('profile.passkeys.no_passkeys') }}
             </div>
 
             <p v-if="passkeys.error.value" class="text-sm text-destructive">
@@ -152,27 +156,27 @@ const handleCloseRegisterModal = () => {
         </div>
 
         <template #footer>
-            <Button variant="outline" @click="handleCloseModal">Close</Button>
+            <Button variant="outline" @click="handleCloseModal">{{ trans('common.close') }}</Button>
             <Button @click="handleOpenRegisterModal" :disabled="passkeys.loading.value">
-                Register New Passkey
+                {{ trans('profile.passkeys.register_new') }}
             </Button>
         </template>
     </Modal>
 
     <!-- Register Passkey Modal -->
-    <Modal v-model:open="showRegisterModal" title="Register New Passkey" description="Create a new passkey for passwordless authentication" @close="handleCloseRegisterModal">
+    <Modal v-model:open="showRegisterModal" :title="trans('profile.passkeys.register_title')" :description="trans('profile.passkeys.register_description')" @close="handleCloseRegisterModal">
         <div class="space-y-4">
             <p class="text-sm text-muted-foreground">
-                Give your passkey a name to help you identify which device it's for (e.g., "MacBook Pro", "iPhone 15").
+                {{ trans('profile.passkeys.name_hint') }}
             </p>
 
             <div class="space-y-2">
-                <Label for="passkey-name">Passkey Name</Label>
+                <Label for="passkey-name">{{ trans('profile.passkeys.passkey_name') }}</Label>
                 <Input
                     id="passkey-name"
                     v-model="passkeyName"
                     type="text"
-                    placeholder="My Device"
+                    :placeholder="trans('profile.passkeys.name_placeholder')"
                 />
             </div>
 
@@ -182,12 +186,12 @@ const handleCloseRegisterModal = () => {
         </div>
 
         <template #footer>
-            <Button variant="outline" @click="handleCloseRegisterModal">Cancel</Button>
+            <Button variant="outline" @click="handleCloseRegisterModal">{{ trans('common.cancel') }}</Button>
             <Button
                 @click="handleRegisterPasskey"
                 :disabled="passkeys.loading.value || !passkeyName"
             >
-                {{ passkeys.loading.value ? 'Registering...' : 'Register Passkey' }}
+                {{ passkeys.loading.value ? trans('profile.passkeys.registering') : trans('profile.passkeys.register') }}
             </Button>
         </template>
     </Modal>

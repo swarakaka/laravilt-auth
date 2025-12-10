@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Form, Head, router } from '@inertiajs/vue3';
-import { ref, watch } from 'vue';
+import { ref, watch, onMounted, computed } from 'vue';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -11,10 +11,18 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
-import FormRenderer from '@laravilt/forms/components/FormRenderer.vue';
+import LaraviltForm from '@laravilt/forms/components/Form.vue';
 import ErrorProvider from '@laravilt/forms/components/ErrorProvider.vue';
 import SettingsLayout from '@laravilt/panel/layouts/SettingsLayout.vue';
 import { Monitor, Smartphone, Tablet, MapPin, Clock, Trash2, LogOut } from 'lucide-vue-next';
+
+const isLoading = ref(true);
+
+onMounted(() => {
+    setTimeout(() => {
+        isLoading.value = false;
+    }, 100);
+});
 
 interface PageData {
     heading: string;
@@ -37,8 +45,14 @@ interface Session {
     device: Device;
 }
 
+interface BreadcrumbItem {
+    label: string;
+    url: string | null;
+}
+
 const props = defineProps<{
     page: PageData;
+    breadcrumbs?: BreadcrumbItem[];
     sessions: Session[];
     currentSessionId: string;
     logoutAction: string;
@@ -48,6 +62,15 @@ const props = defineProps<{
     clusterTitle?: string;
     clusterDescription?: string;
 }>();
+
+// Transform breadcrumbs to frontend format
+const transformedBreadcrumbs = computed(() => {
+    if (!props.breadcrumbs) return [];
+    return props.breadcrumbs.map(item => ({
+        title: item.label,
+        href: item.url || '#',
+    }));
+});
 
 const showLogoutOthersDialog = ref(false);
 
@@ -76,9 +99,11 @@ const revokeSession = (sessionId: string) => {
     <Head :title="page.heading" />
 
     <SettingsLayout
+        :breadcrumbs="transformedBreadcrumbs"
         :navigation="clusterNavigation"
         :title="clusterTitle"
         :description="clusterDescription"
+        :loading="isLoading"
     >
         <section class="max-w-2xl">
             <!-- Page Header -->
@@ -181,7 +206,7 @@ const revokeSession = (sessionId: string) => {
                         >
                             <ErrorProvider :errors="errors">
                                 <div class="space-y-4">
-                                    <FormRenderer :schema="schema" />
+                                    <LaraviltForm :schema="schema" />
 
                                     <Button
                                         type="submit"

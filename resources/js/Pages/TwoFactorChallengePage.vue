@@ -3,11 +3,14 @@ import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 import { Button } from '@/components/ui/button';
 import CardLayout from '@laravilt/panel/layouts/CardLayout.vue';
-import FormRenderer from '@laravilt/forms/components/FormRenderer.vue';
+import Form from '@laravilt/forms/components/Form.vue';
 import ErrorProvider from '@laravilt/forms/components/ErrorProvider.vue';
 import ActionButton from '@laravilt/actions/components/ActionButton.vue';
 import { useNotification } from '@laravilt/notifications/app.ts';
 import { Hash, Fingerprint, Mail, KeyRound } from 'lucide-vue-next';
+import { useLocalization } from '@laravilt/support/composables';
+
+const { trans } = useLocalization();
 
 interface Props {
     page: {
@@ -24,6 +27,8 @@ interface Props {
     passkeyLoginUrl?: string;
     hasMagicLinks?: boolean;
     magicLinkSendUrl?: string;
+    userTwoFactorMethod?: string;
+    resendUrl?: string;
 }
 
 const props = defineProps<Props>();
@@ -33,8 +38,9 @@ type AuthMethod = 'code' | 'passkey' | 'magic-link' | 'recovery';
 const selectedMethod = ref<AuthMethod | null>(null);
 const confirmedMethod = ref<AuthMethod | null>(null);
 const sendingMagicLink = ref(false);
+const resendingCode = ref(false);
 const { notify } = useNotification();
-const formRendererRef = ref<InstanceType<typeof FormRenderer> | null>(null);
+const formRendererRef = ref<InstanceType<typeof Form> | null>(null);
 const page = usePage();
 const processing = ref(false);
 
@@ -68,12 +74,12 @@ const handleFormSubmit = (event: Event) => {
 
     if (processing.value) return;
 
-    // Get form data from FormRenderer
+    // Get form data from Form
     let data: Record<string, any> = {};
     if (formRendererRef.value && typeof formRendererRef.value.getFormData === 'function') {
         data = formRendererRef.value.getFormData();
     } else {
-        console.error('FormRenderer ref not available');
+        console.error('Form ref not available');
         return;
     }
 
@@ -103,8 +109,8 @@ const availableMethods = computed(() => {
     const methods: Array<{ id: AuthMethod; label: string; description: string; icon: any }> = [
         {
             id: 'code',
-            label: 'Authenticator Code',
-            description: 'Use your authenticator app',
+            label: trans('laravilt-auth::auth.two_factor_challenge.authenticator_code'),
+            description: trans('laravilt-auth::auth.two_factor_challenge.authenticator_desc'),
             icon: Hash
         }
     ];
@@ -112,8 +118,8 @@ const availableMethods = computed(() => {
     if (props.hasPasskeys) {
         methods.push({
             id: 'passkey',
-            label: 'Passkey',
-            description: 'Use biometric or security key',
+            label: trans('laravilt-auth::auth.two_factor_challenge.passkey'),
+            description: trans('laravilt-auth::auth.two_factor_challenge.passkey_desc'),
             icon: Fingerprint
         });
     }
@@ -121,8 +127,8 @@ const availableMethods = computed(() => {
     if (props.hasMagicLinks) {
         methods.push({
             id: 'magic-link',
-            label: 'Magic Link',
-            description: 'Receive link via email',
+            label: trans('laravilt-auth::auth.two_factor_challenge.magic_link'),
+            description: trans('laravilt-auth::auth.two_factor_challenge.magic_link_desc'),
             icon: Mail
         });
     }
@@ -130,8 +136,8 @@ const availableMethods = computed(() => {
     if (props.hasTwoFactorRecovery) {
         methods.push({
             id: 'recovery',
-            label: 'Recovery Code',
-            description: 'Use backup recovery code',
+            label: trans('laravilt-auth::auth.two_factor_challenge.recovery_code'),
+            description: trans('laravilt-auth::auth.two_factor_challenge.recovery_code_desc'),
             icon: KeyRound
         });
     }
@@ -247,19 +253,63 @@ const handleSendMagicLink = async () => {
         const result = await response.json();
         notify({
             type: 'success',
-            message: 'Magic link sent! Check your email.',
+            message: trans('laravilt-auth::auth.two_factor_challenge.magic_link_sent'),
         });
 
     } catch (error) {
         console.error('Failed to send magic link:', error);
         notify({
             type: 'error',
-            message: 'Failed to send magic link: ' + (error as Error).message,
+            message: trans('laravilt-auth::auth.two_factor_challenge.magic_link_error') + ': ' + (error as Error).message,
         });
     } finally {
         sendingMagicLink.value = false;
     }
 };
+
+// Resend 2FA email code handler
+const handleResendCode = async () => {
+    if (!props.resendUrl || resendingCode.value) {
+        return;
+    }
+
+    resendingCode.value = true;
+
+    try {
+        const response = await fetch(props.resendUrl, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+            }
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || trans('laravilt-auth::auth.two_factor_challenge.resend_error'));
+        }
+
+        const result = await response.json();
+        notify({
+            type: 'success',
+            message: trans('laravilt-auth::auth.two_factor_challenge.code_resent'),
+        });
+
+    } catch (error) {
+        console.error('Failed to resend code:', error);
+        notify({
+            type: 'error',
+            message: (error as Error).message,
+        });
+    } finally {
+        resendingCode.value = false;
+    }
+};
+
+// Check if user is using email 2FA
+const isEmailTwoFactor = computed(() => props.userTwoFactorMethod === 'email');
 
 // Helper functions
 function base64urlDecode(base64url: string): ArrayBuffer {
@@ -285,10 +335,13 @@ function arrayBufferToBase64url(buffer: ArrayBuffer): string {
 </script>
 
 <template>
-    <CardLayout :title="page.heading">
-        <Head :title="page.heading" />
+    <CardLayout
+        :title="trans('laravilt-auth::auth.two_factor_challenge.title')"
+        :description="!confirmedMethod ? trans('laravilt-auth::auth.two_factor_challenge.choose_method') : undefined"
+    >
+        <Head :title="trans('laravilt-auth::auth.two_factor_challenge.title')" />
 
-        <div class="space-y-6">
+        <div class="space-y-4">
             <!-- Back Button (shown when a method has been confirmed) -->
             <button
                 v-if="confirmedMethod"
@@ -296,17 +349,14 @@ function arrayBufferToBase64url(buffer: ArrayBuffer): string {
                 type="button"
                 class="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg class="w-4 h-4 rtl:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                 </svg>
-                Back to authentication methods
+                {{ trans('laravilt-auth::auth.two_factor_challenge.back_to_methods') }}
             </button>
 
             <!-- Method Selection Screen (only show when no method is confirmed) -->
-            <div v-if="!confirmedMethod" class="flex flex-col gap-4">
-                <p class="text-sm text-muted-foreground text-center">
-                    Choose your verification method
-                </p>
+            <div v-if="!confirmedMethod" class="flex flex-col gap-3">
 
                 <div class="grid grid-cols-1 gap-2">
                     <button
@@ -314,17 +364,17 @@ function arrayBufferToBase64url(buffer: ArrayBuffer): string {
                         :key="method.id"
                         type="button"
                         @click="selectedMethod = method.id"
-                        class="relative flex flex-col items-start gap-2 rounded-lg border-2 p-4 text-left transition-all hover:bg-accent"
+                        class="relative flex flex-col items-start gap-2 rounded-lg border-2 p-4 text-start transition-all hover:bg-accent"
                         :class="{
                             'border-primary bg-accent': selectedMethod === method.id,
                             'border-muted': selectedMethod !== method.id
                         }"
                     >
                         <div class="flex items-center gap-3 w-full">
-                            <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10 text-primary">
+                            <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10 text-primary shrink-0">
                                 <component :is="method.icon" class="w-5 h-5" />
                             </div>
-                            <div class="flex-1 min-w-0">
+                            <div class="flex-1 min-w-0 text-start">
                                 <p class="font-medium text-sm leading-none mb-1">
                                     {{ method.label }}
                                 </p>
@@ -334,7 +384,7 @@ function arrayBufferToBase64url(buffer: ArrayBuffer): string {
                             </div>
                             <div
                                 v-if="selectedMethod === method.id"
-                                class="h-4 w-4 rounded-full bg-primary flex items-center justify-center flex-shrink-0"
+                                class="h-4 w-4 rounded-full bg-primary flex items-center justify-center shrink-0"
                             >
                                 <svg class="h-3 w-3 text-primary-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
@@ -351,7 +401,7 @@ function arrayBufferToBase64url(buffer: ArrayBuffer): string {
                     class="w-full"
                     size="lg"
                 >
-                    Continue
+                    {{ trans('laravilt-auth::auth.common.continue') }}
                 </Button>
             </div>
 
@@ -359,27 +409,40 @@ function arrayBufferToBase64url(buffer: ArrayBuffer): string {
             <div v-if="confirmedMethod === 'code'">
                 <form
                     @submit="handleFormSubmit"
-                    class="flex flex-col gap-6"
+                    class="flex flex-col gap-4"
                 >
                     <ErrorProvider :errors="page.props.errors || {}">
-                        <FormRenderer ref="formRendererRef" :schema="schema" />
+                        <Form ref="formRendererRef" :schema="schema" />
 
                         <Button
                             type="submit"
                             class="w-full"
                             :disabled="processing"
                         >
-                            {{ processing ? 'Verifying...' : 'Verify Code' }}
+                            {{ processing ? trans('laravilt-auth::auth.two_factor_challenge.verify_loading') : trans('laravilt-auth::auth.two_factor_challenge.verify_button') }}
                         </Button>
                     </ErrorProvider>
                 </form>
+
+                <!-- Resend Code (only for email 2FA) -->
+                <div v-if="isEmailTwoFactor" class="flex items-center justify-center gap-2 text-sm text-muted-foreground mt-4">
+                    <span>{{ trans('laravilt-auth::auth.two_factor_challenge.didnt_receive') }}</span>
+                    <button
+                        type="button"
+                        class="text-primary hover:underline cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                        :disabled="resendingCode"
+                        @click="handleResendCode"
+                    >
+                        {{ resendingCode ? trans('laravilt-auth::auth.two_factor_challenge.resending') : trans('laravilt-auth::auth.two_factor_challenge.resend') }}
+                    </button>
+                </div>
             </div>
 
             <!-- Recovery Code Form -->
             <div v-if="confirmedMethod === 'recovery'" class="flex flex-col gap-4 items-center py-4">
                 <div class="text-center space-y-2">
                     <p class="text-sm text-muted-foreground">
-                        Use one of your emergency recovery codes
+                        {{ trans('laravilt-auth::auth.two_factor_challenge.use_emergency_code') }}
                     </p>
                 </div>
                 <Button
@@ -389,10 +452,10 @@ function arrayBufferToBase64url(buffer: ArrayBuffer): string {
                     size="lg"
                 >
                     <Link :href="recoveryUrl">
-                        <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg class="w-5 h-5 me-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                         </svg>
-                        Enter Recovery Code
+                        {{ trans('laravilt-auth::auth.two_factor_challenge.enter_recovery') }}
                     </Link>
                 </Button>
             </div>

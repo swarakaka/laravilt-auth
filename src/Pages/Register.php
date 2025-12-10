@@ -17,18 +17,23 @@ use Laravilt\Panel\Pages\Page;
 
 class Register extends Page
 {
-    protected static ?string $title = 'Create Account';
+    protected static ?string $title = null;
 
     protected static bool $shouldRegisterNavigation = false;
 
+    public static function getTitle(): string
+    {
+        return __('laravilt-auth::auth.register.title');
+    }
+
     public function getHeading(): string
     {
-        return 'Create Account';
+        return __('laravilt-auth::auth.register.heading');
     }
 
     public function getSubheading(): ?string
     {
-        return 'Get started by creating your account.';
+        return __('laravilt-auth::auth.register.subheading');
     }
 
     public function getLayout(): string
@@ -53,28 +58,28 @@ class Register extends Page
     {
         return [
             TextInput::make('name')
-                ->label('Name')
+                ->label(__('laravilt-auth::auth.fields.name'))
                 ->required()
                 ->rules(['required', 'string', 'max:255'])
                 ->autofocus()
                 ->tabindex(1),
 
             TextInput::make('email')
-                ->label('Email')
+                ->label(__('laravilt-auth::auth.fields.email'))
                 ->email()
                 ->required()
                 ->rules(['required', 'email', 'max:255', 'unique:users,email'])
                 ->tabindex(2),
 
             TextInput::make('password')
-                ->label('Password')
+                ->label(__('laravilt-auth::auth.fields.password'))
                 ->password()
                 ->required()
                 ->rules(['required', 'min:8', 'confirmed'])
                 ->tabindex(3),
 
             TextInput::make('password_confirmation')
-                ->label('Confirm Password')
+                ->label(__('laravilt-auth::auth.fields.password_confirmation'))
                 ->password()
                 ->required()
                 ->tabindex(4),
@@ -85,7 +90,7 @@ class Register extends Page
     {
         return [
             Action::make('register')
-                ->label('Create Account')
+                ->label(__('laravilt-auth::auth.register.button'))
                 ->action(function (array $data) {
                     return $this->createUser($data);
                 })

@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
+import { useLocalization } from '@laravilt/support/composables';
+
+const { trans } = useLocalization();
 
 const props = defineProps<{
     forgotPasswordUrl?: string;
@@ -20,12 +23,12 @@ const props = defineProps<{
                 v-if="canRegister && registerUrl"
                 class="text-center text-sm text-muted-foreground"
             >
-                Don't have an account?
+                {{ trans('laravilt-auth::auth.login.no_account') }}
                 <Link
                     :href="registerUrl"
                     class="text-foreground underline decoration-neutral-300 underline-offset-4 transition-colors duration-300 ease-out hover:decoration-current! dark:decoration-neutral-500"
                 >
-                    Sign up
+                    {{ trans('laravilt-auth::auth.login.sign_up') }}
                 </Link>
             </div>
         </template>
@@ -35,12 +38,12 @@ const props = defineProps<{
             v-else-if="mode === 'register' && canLogin && loginUrl"
             class="text-center text-sm text-muted-foreground"
         >
-            Already have an account?
+            {{ trans('laravilt-auth::auth.register.have_account') }}
             <Link
                 :href="loginUrl"
                 class="text-foreground underline decoration-neutral-300 underline-offset-4 transition-colors duration-300 ease-out hover:decoration-current! dark:decoration-neutral-500"
             >
-                Sign in
+                {{ trans('laravilt-auth::auth.register.sign_in') }}
             </Link>
         </div>
 
@@ -49,12 +52,12 @@ const props = defineProps<{
             v-else-if="mode === 'forgot-password' && canLogin && loginUrl"
             class="text-center text-sm text-muted-foreground"
         >
-            Remember your password?
+            {{ trans('laravilt-auth::auth.forgot_password.remember_password') }}
             <Link
                 :href="loginUrl"
                 class="text-foreground underline decoration-neutral-300 underline-offset-4 transition-colors duration-300 ease-out hover:decoration-current! dark:decoration-neutral-500"
             >
-                Back to login
+                {{ trans('laravilt-auth::auth.forgot_password.back_to_login') }}
             </Link>
         </div>
     </div>

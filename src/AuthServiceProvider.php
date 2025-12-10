@@ -50,7 +50,7 @@ class AuthServiceProvider extends ServiceProvider
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'laravilt-auth');
 
         // Load translations
-        $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'laravilt-auth');
+        $this->loadTranslationsFrom(__DIR__.'/../lang', 'laravilt-auth');
 
         // Load migrations
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');

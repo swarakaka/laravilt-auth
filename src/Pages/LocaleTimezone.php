@@ -13,7 +13,7 @@ use Laravilt\Panel\Pages\Page;
 
 class LocaleTimezone extends Page
 {
-    protected static ?string $title = 'Language & Region';
+    protected static ?string $title = null;
 
     protected static ?string $cluster = Settings::class;
 
@@ -23,14 +23,26 @@ class LocaleTimezone extends Page
 
     protected static ?string $navigationIcon = 'globe';
 
+    protected static bool $shouldRegisterNavigation = false;
+
+    public static function getTitle(): string
+    {
+        return __('laravilt-auth::auth.profile.locale_timezone.title');
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('laravilt-auth::auth.profile.locale_timezone.nav_label');
+    }
+
     public function getHeading(): string
     {
-        return 'Language & Region';
+        return __('laravilt-auth::auth.profile.locale_timezone.title');
     }
 
     public function getSubheading(): ?string
     {
-        return 'Set your preferred language and timezone for the application.';
+        return __('laravilt-auth::auth.profile.locale_timezone.description');
     }
 
     public function getLayout(): string
@@ -58,14 +70,14 @@ class LocaleTimezone extends Page
 
         return [
             Select::make('locale')
-                ->label('Language')
+                ->label(__('laravilt-auth::auth.profile.locale_timezone.language'))
                 ->options($localeOptions)
                 ->default($user->locale ?? 'en')
                 ->searchable()
                 ->required(),
 
             Select::make('timezone')
-                ->label('Timezone')
+                ->label(__('laravilt-auth::auth.profile.locale_timezone.timezone'))
                 ->options($timezoneOptions)
                 ->default($user->timezone ?? 'UTC')
                 ->searchable()
@@ -77,7 +89,7 @@ class LocaleTimezone extends Page
     {
         return [
             Action::make('update-locale-timezone')
-                ->label('Save Preferences')
+                ->label(__('laravilt-auth::auth.profile.locale_timezone.save'))
                 ->action(function (array $data) {
                     return $this->updateLocaleTimezone($data);
                 }),
@@ -93,92 +105,31 @@ class LocaleTimezone extends Page
         // Validate the data
         $validator = Validator::make($data, [
             'locale' => ['required', 'string', 'max:10'],
-            'timezone' => ['required', 'string', 'max:50', 'timezone:all'],
+            'timezone' => ['required', 'string', 'timezone'],
         ]);
 
         if ($validator->fails()) {
-            return back()->withErrors($validator)->withInput();
+            return back()->withErrors($validator);
         }
 
-        $validated = $validator->validated();
+        // Update the user's locale and timezone
+        $user->update([
+            'locale' => $data['locale'],
+            'timezone' => $data['timezone'],
+        ]);
 
-        // Update user
-        $user->update($validated);
-
-        notify('Language and timezone preferences updated successfully.');
-
-        return back();
+        return back()->with('success', __('laravilt-auth::auth.profile.locale_timezone.updated'));
     }
-
-    protected function getInertiaProps(): array
-    {
-        $panel = $this->getPanel();
-        $guard = $panel->getAuthGuard();
-        $user = Auth::guard($guard)->user();
-
-        return [
-            'user' => [
-                'locale' => $user->locale,
-                'timezone' => $user->timezone,
-            ],
-            'availableLocales' => static::getAvailableLocales(),
-            'availableTimezones' => static::getAvailableTimezones(),
-            'status' => session('status'),
-        ];
-    }
-
-    /**
-     * RTL (Right-to-Left) locales.
-     */
-    protected static array $rtlLocales = [
-        'ar', // Arabic
-        'he', // Hebrew
-        'fa', // Persian/Farsi
-        'ur', // Urdu
-        'ps', // Pashto
-        'sd', // Sindhi
-        'yi', // Yiddish
-        'ku', // Kurdish (some variants)
-        'ug', // Uyghur
-        'dv', // Divehi
-    ];
 
     /**
      * Get available locales.
      */
     public static function getAvailableLocales(): array
     {
-        return [
+        return config('app.available_locales', [
             ['value' => 'en', 'label' => 'English', 'dir' => 'ltr'],
-            ['value' => 'es', 'label' => 'Spanish', 'dir' => 'ltr'],
-            ['value' => 'fr', 'label' => 'French', 'dir' => 'ltr'],
-            ['value' => 'de', 'label' => 'German', 'dir' => 'ltr'],
-            ['value' => 'it', 'label' => 'Italian', 'dir' => 'ltr'],
-            ['value' => 'pt', 'label' => 'Portuguese', 'dir' => 'ltr'],
-            ['value' => 'ru', 'label' => 'Russian', 'dir' => 'ltr'],
-            ['value' => 'zh', 'label' => 'Chinese', 'dir' => 'ltr'],
-            ['value' => 'ja', 'label' => 'Japanese', 'dir' => 'ltr'],
-            ['value' => 'ko', 'label' => 'Korean', 'dir' => 'ltr'],
-            ['value' => 'ar', 'label' => 'العربية (Arabic)', 'dir' => 'rtl'],
-            ['value' => 'he', 'label' => 'עברית (Hebrew)', 'dir' => 'rtl'],
-            ['value' => 'fa', 'label' => 'فارسی (Persian)', 'dir' => 'rtl'],
-            ['value' => 'ur', 'label' => 'اردو (Urdu)', 'dir' => 'rtl'],
-            ['value' => 'hi', 'label' => 'Hindi', 'dir' => 'ltr'],
-            ['value' => 'nl', 'label' => 'Dutch', 'dir' => 'ltr'],
-            ['value' => 'pl', 'label' => 'Polish', 'dir' => 'ltr'],
-            ['value' => 'tr', 'label' => 'Turkish', 'dir' => 'ltr'],
-        ];
-    }
-
-    /**
-     * Check if a locale is RTL.
-     */
-    public static function isRtlLocale(string $locale): bool
-    {
-        $baseLocale = explode('_', $locale)[0];
-        $baseLocale = explode('-', $baseLocale)[0];
-
-        return in_array(strtolower($baseLocale), static::$rtlLocales);
+            ['value' => 'ar', 'label' => 'العربية', 'dir' => 'rtl'],
+        ]);
     }
 
     /**
@@ -186,39 +137,36 @@ class LocaleTimezone extends Page
      */
     public static function getAvailableTimezones(): array
     {
-        $timezones = DateTimeZone::listIdentifiers();
-        $grouped = [];
+        $timezones = [];
+        $regions = [
+            'Africa' => DateTimeZone::AFRICA,
+            'America' => DateTimeZone::AMERICA,
+            'Antarctica' => DateTimeZone::ANTARCTICA,
+            'Asia' => DateTimeZone::ASIA,
+            'Atlantic' => DateTimeZone::ATLANTIC,
+            'Australia' => DateTimeZone::AUSTRALIA,
+            'Europe' => DateTimeZone::EUROPE,
+            'Indian' => DateTimeZone::INDIAN,
+            'Pacific' => DateTimeZone::PACIFIC,
+        ];
 
-        foreach ($timezones as $timezone) {
-            $parts = explode('/', $timezone, 2);
-            $region = $parts[0];
+        foreach ($regions as $name => $region) {
+            $tzList = DateTimeZone::listIdentifiers($region);
+            $regionTimezones = [];
 
-            // Skip generic regions
-            if (in_array($region, ['UTC', 'GMT'])) {
-                $region = 'UTC';
-            }
-
-            $label = str_replace(['_', '/'], [' ', ' / '], $timezone);
-
-            if (!isset($grouped[$region])) {
-                $grouped[$region] = [
-                    'region' => $region,
-                    'timezones' => [],
+            foreach ($tzList as $tz) {
+                $regionTimezones[] = [
+                    'value' => $tz,
+                    'label' => str_replace('_', ' ', $tz),
                 ];
             }
 
-            $grouped[$region]['timezones'][] = [
-                'value' => $timezone,
-                'label' => $label,
+            $timezones[] = [
+                'region' => $name,
+                'timezones' => $regionTimezones,
             ];
         }
 
-        // Sort regions and their timezones
-        ksort($grouped);
-        foreach ($grouped as &$group) {
-            usort($group['timezones'], fn($a, $b) => $a['label'] <=> $b['label']);
-        }
-
-        return array_values($grouped);
+        return $timezones;
     }
 }

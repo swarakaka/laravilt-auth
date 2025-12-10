@@ -12,7 +12,7 @@ use Laravilt\Panel\Pages\Page;
 
 class ManageTwoFactor extends Page
 {
-    protected static ?string $title = 'Two-Factor Auth';
+    protected static ?string $title = null;
 
     protected static ?string $cluster = Settings::class;
 
@@ -22,14 +22,19 @@ class ManageTwoFactor extends Page
 
     protected ?string $component = 'laravilt-auth/ManageTwoFactorPage';
 
+    public static function getTitle(): string
+    {
+        return __('laravilt-auth::auth.profile.two_factor.title');
+    }
+
     public function getHeading(): string
     {
-        return 'Two-Factor Auth';
+        return __('laravilt-auth::auth.profile.two_factor.title');
     }
 
     public function getSubheading(): ?string
     {
-        return 'Add additional security to your account using two-factor authentication.';
+        return __('laravilt-auth::auth.profile.two_factor.description');
     }
 
     public function getLayout(): string
@@ -268,7 +273,7 @@ class ManageTwoFactor extends Page
         $panelId = $this->getPanel()->getId();
 
         return \Laravilt\Actions\Action::make('enable')
-            ->label('Enable Two-Factor Authentication')
+            ->label(__('laravilt-auth::auth.profile.two_factor.enable'))
             ->url(route("{$panelId}.two-factor.enable"))
             ->preserveScroll(false)
             ->preserveState(false)
@@ -278,7 +283,7 @@ class ManageTwoFactor extends Page
     protected function getConfirmCodeInput(): \Laravilt\Forms\Components\PinInput
     {
         return \Laravilt\Forms\Components\PinInput::make('code')
-            ->label('Verification Code')
+            ->label(__('laravilt-auth::auth.profile.two_factor.verify_code'))
             ->required()
             ->length(6)
             ->type('numeric')
@@ -292,7 +297,7 @@ class ManageTwoFactor extends Page
         return \Laravilt\Actions\Action::make('confirm')
             ->preserveScroll(false)
             ->preserveState(false)
-            ->label('Confirm and Enable')
+            ->label(__('laravilt-auth::auth.profile.two_factor.confirm_enable'))
             ->url(route("{$panelId}.two-factor.confirm"))
             ->requiresConfirmation(false);
     }
@@ -304,7 +309,7 @@ class ManageTwoFactor extends Page
         return \Laravilt\Actions\Action::make('cancel')
             ->preserveScroll(false)
             ->preserveState(false)
-            ->label('Cancel')
+            ->label(__('laravilt-auth::auth.common.cancel'))
             ->url(route("{$panelId}.two-factor.cancel"))
             ->color('secondary')
             ->requiresConfirmation(false);
@@ -315,15 +320,15 @@ class ManageTwoFactor extends Page
         $panelId = $this->getPanel()->getId();
 
         return \Laravilt\Actions\Action::make('disable')
-            ->label('Disable Two-Factor Authentication')
+            ->label(__('laravilt-auth::auth.profile.two_factor.disable'))
             ->url(route("{$panelId}.two-factor.disable"))
             ->preserveScroll(false)
             ->preserveState(false)
             ->method('delete')
             ->color('danger')
             ->requiresConfirmation(true)
-            ->modalHeading('Disable Two-Factor Authentication')
-            ->modalDescription('Are you sure you want to disable two-factor authentication? This will make your account less secure.');
+            ->modalHeading(__('laravilt-auth::auth.profile.two_factor.disable_title'))
+            ->modalDescription(__('laravilt-auth::auth.profile.two_factor.disable_warning'));
     }
 
     protected function getMethodSelectionInput(): \Laravilt\Forms\Components\Radio
@@ -344,7 +349,7 @@ class ManageTwoFactor extends Page
         $defaultMethod = $providers[0]['name'] ?? 'totp';
 
         return \Laravilt\Forms\Components\Radio::make('method')
-            ->label('Select Method')
+            ->label(__('laravilt-auth::auth.profile.two_factor.select_method'))
             ->default($defaultMethod)
             ->options($options)
             ->descriptions($descriptions);
@@ -356,8 +361,8 @@ class ManageTwoFactor extends Page
     protected function getProviderDescription(string $name): string
     {
         return match ($name) {
-            'totp' => 'Use an authenticator app like Google Authenticator or Authy',
-            'email' => 'Receive verification codes via email',
+            'totp' => __('laravilt-auth::auth.profile.two_factor.totp_description'),
+            'email' => __('laravilt-auth::auth.profile.two_factor.email_description'),
             default => '',
         };
     }

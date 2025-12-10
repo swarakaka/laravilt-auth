@@ -11,7 +11,7 @@ use Laravilt\Panel\Pages\Page;
 
 class ManagePasskeys extends Page
 {
-    protected static ?string $title = 'Passkeys';
+    protected static ?string $title = null;
 
     protected static ?string $cluster = Settings::class;
 
@@ -21,14 +21,19 @@ class ManagePasskeys extends Page
 
     protected ?string $component = 'laravilt-auth/ManagePasskeysPage';
 
+    public static function getTitle(): string
+    {
+        return __('laravilt-auth::auth.profile.passkeys.title');
+    }
+
     public function getHeading(): string
     {
-        return 'Passkeys';
+        return __('laravilt-auth::auth.profile.passkeys.title');
     }
 
     public function getSubheading(): ?string
     {
-        return 'Manage passkeys that allow you to sign in without a password.';
+        return __('laravilt-auth::auth.profile.passkeys.description');
     }
 
     public function getLayout(): string
@@ -80,18 +85,18 @@ class ManagePasskeys extends Page
     protected function getRegisterPasskeyAction(): array
     {
         $action = Action::make('register-passkey')
-            ->label('Register New Passkey')
+            ->label(__('laravilt-auth::auth.profile.passkeys.register_new'))
             ->icon('key')
             ->color('primary')
-            ->modalHeading('Register New Passkey')
-            ->modalDescription('Enter a name for this passkey to help you identify it later.')
+            ->modalHeading(__('laravilt-auth::auth.profile.passkeys.register_title'))
+            ->modalDescription(__('laravilt-auth::auth.profile.passkeys.register_description'))
             ->modalIcon('key')
             ->schema([
                 TextInput::make('name')
-                    ->label('Passkey Name')
-                    ->placeholder('My Device')
+                    ->label(__('laravilt-auth::auth.profile.passkeys.passkey_name'))
+                    ->placeholder(__('laravilt-auth::auth.profile.passkeys.name_placeholder'))
                     ->required()
-                    ->helperText('This name will help you identify this passkey later.'),
+                    ->helperText(__('laravilt-auth::auth.profile.passkeys.name_hint')),
             ])
             ->toArray();
 

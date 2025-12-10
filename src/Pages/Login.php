@@ -17,18 +17,23 @@ use Laravilt\Panel\Pages\Page;
 
 class Login extends Page
 {
-    protected static ?string $title = 'Sign In';
+    protected static ?string $title = null;
 
     protected static bool $shouldRegisterNavigation = false;
 
+    public static function getTitle(): string
+    {
+        return __('laravilt-auth::auth.login.title');
+    }
+
     public function getHeading(): string
     {
-        return 'Sign In';
+        return __('laravilt-auth::auth.login.heading');
     }
 
     public function getSubheading(): ?string
     {
-        return 'Welcome back! Please enter your credentials.';
+        return __('laravilt-auth::auth.login.subheading');
     }
 
     public function getLayout(): string
@@ -40,7 +45,7 @@ class Login extends Page
     {
         $panel = $this->getPanel();
         $passwordField = TextInput::make('password')
-            ->label('Password')
+            ->label(__('laravilt-auth::auth.fields.password'))
             ->password()
             ->required()
             ->tabindex(2);
@@ -49,6 +54,7 @@ class Login extends Page
         if ($panel->hasPasswordReset()) {
             $passwordField->hintAction(
                 Action::make('forgot-password')
+                    ->label(__('laravilt-auth::auth.login.forgot_password'))
                     ->link()
                     ->url(route($panel->getId().'.password.request'))
             );
@@ -56,7 +62,7 @@ class Login extends Page
 
         return [
             TextInput::make('email')
-                ->label('Email')
+                ->label(__('laravilt-auth::auth.fields.email'))
                 ->email()
                 ->required()
                 ->autofocus()
@@ -65,7 +71,7 @@ class Login extends Page
             $passwordField,
 
             Checkbox::make('remember')
-                ->label('Remember me')
+                ->label(__('laravilt-auth::auth.login.remember_me'))
                 ->tabindex(3),
         ];
     }
@@ -74,7 +80,7 @@ class Login extends Page
     {
         return [
             Action::make('login')
-                ->label('Sign In')
+                ->label(__('laravilt-auth::auth.login.button'))
                 ->action(function (array $data) {
                     return $this->attemptLogin($data);
                 })
@@ -105,8 +111,9 @@ class Login extends Page
         if (Auth::guard($guard)->attempt($credentials, $data['remember'] ?? false)) {
             $user = Auth::guard($guard)->user();
 
-            // Check if user has two-factor authentication enabled AND confirmed
-            if ($user && ! is_null($user->two_factor_secret) && ! is_null($user->two_factor_confirmed_at)) {
+            // Check if BOTH the panel has 2FA enabled AND the user has 2FA enabled and confirmed
+            // Only redirect to 2FA challenge if the current panel supports 2FA
+            if ($panel->hasTwoFactor() && $user && ! is_null($user->two_factor_secret) && ! is_null($user->two_factor_confirmed_at)) {
                 // User has 2FA enabled and confirmed, logout and redirect to challenge
                 Auth::guard($guard)->logout();
 
@@ -119,7 +126,7 @@ class Login extends Page
                 return redirect()->route($this->getPanel()->getId().'.two-factor.challenge');
             }
 
-            // No 2FA, proceed with normal login
+            // No 2FA required (either panel doesn't support it or user doesn't have it enabled)
             request()->session()->regenerate();
 
             // Mark that auth is complete (no 2FA required)
@@ -132,10 +139,7 @@ class Login extends Page
                 $data['remember'] ?? false
             );
 
-            $redirectPath = $panel->getPath();
-            \Log::info('Login successful, redirecting to: '.$redirectPath);
-
-            return redirect($redirectPath);
+            return redirect($panel->getPath());
         }
 
         // If authentication failed

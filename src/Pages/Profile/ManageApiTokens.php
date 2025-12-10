@@ -12,7 +12,7 @@ use Laravilt\Panel\Pages\Page;
 
 class ManageApiTokens extends Page
 {
-    protected static ?string $title = 'API Tokens';
+    protected static ?string $title = null;
 
     protected static ?string $cluster = Settings::class;
 
@@ -22,14 +22,19 @@ class ManageApiTokens extends Page
 
     protected ?string $component = 'laravilt-auth/ManageApiTokensPage';
 
+    public static function getTitle(): string
+    {
+        return __('laravilt-auth::auth.profile.api_tokens.title');
+    }
+
     public function getHeading(): string
     {
-        return 'API Tokens';
+        return __('laravilt-auth::auth.profile.api_tokens.title');
     }
 
     public function getSubheading(): ?string
     {
-        return 'Manage API tokens that allow third-party services to access this application on your behalf.';
+        return __('laravilt-auth::auth.profile.api_tokens.description');
     }
 
     public function getLayout(): string
@@ -104,23 +109,23 @@ class ManageApiTokens extends Page
         $availableAbilities = $this->getAvailableAbilities();
 
         return \Laravilt\Actions\Action::make('create')
-            ->label('Create New API Token')
-            ->modalHeading('Create New API Token')
-            ->modalDescription('API tokens allow third-party services to authenticate with our application on your behalf.')
-            ->modalSubmitActionLabel('Create Token')
+            ->label(__('laravilt-auth::auth.profile.api_tokens.create_new'))
+            ->modalHeading(__('laravilt-auth::auth.profile.api_tokens.create_new'))
+            ->modalDescription(__('laravilt-auth::auth.profile.api_tokens.third_party_info'))
+            ->modalSubmitActionLabel(__('laravilt-auth::auth.profile.api_tokens.create'))
             ->preserveState(false)
             ->preserveScroll(false)
             ->schema([
                 \Laravilt\Forms\Components\TextInput::make('name')
-                    ->label('Token Name')
+                    ->label(__('laravilt-auth::auth.profile.api_tokens.token_name'))
                     ->required()
-                    ->placeholder('My API Token')
-                    ->helperText('A descriptive name for this token.'),
+                    ->placeholder(__('laravilt-auth::auth.profile.api_tokens.token_name_placeholder'))
+                    ->helperText(__('laravilt-auth::auth.profile.api_tokens.token_name_hint')),
 
                 \Laravilt\Forms\Components\Checkbox::make('abilities')
-                    ->label('Permissions')
+                    ->label(__('laravilt-auth::auth.profile.api_tokens.permissions'))
                     ->options($availableAbilities)
-                    ->helperText('Select the permissions this token should have.'),
+                    ->helperText(__('laravilt-auth::auth.profile.api_tokens.permissions_hint')),
             ])
             ->action(function (array $data) {
                 return $this->createToken(request());
@@ -134,21 +139,21 @@ class ManageApiTokens extends Page
     protected function getRevokeAllAction(): array
     {
         return \Laravilt\Actions\Action::make('revoke-all')
-            ->label('Revoke All Tokens')
+            ->label(__('laravilt-auth::auth.profile.api_tokens.revoke_all'))
             ->color('danger')
-            ->modalHeading('Revoke All Tokens')
-            ->modalDescription('This will revoke all active tokens. Applications using these tokens will lose access.')
-            ->modalSubmitActionLabel('Revoke All Tokens')
+            ->modalHeading(__('laravilt-auth::auth.profile.api_tokens.revoke_all'))
+            ->modalDescription(__('laravilt-auth::auth.profile.api_tokens.revoke_all_warning'))
+            ->modalSubmitActionLabel(__('laravilt-auth::auth.profile.api_tokens.revoke_all'))
             ->requiresConfirmation()
             ->preserveScroll(false)
             ->preserveState(false)
             ->schema([
                 \Laravilt\Forms\Components\TextInput::make('password')
-                    ->label('Password')
+                    ->label(__('laravilt-auth::auth.fields.password'))
                     ->type('password')
                     ->required()
-                    ->placeholder('Enter your password')
-                    ->helperText('Confirm your password to revoke all tokens.'),
+                    ->placeholder(__('laravilt-auth::auth.profile.api_tokens.password_placeholder'))
+                    ->helperText(__('laravilt-auth::auth.profile.api_tokens.password_hint')),
             ])
             ->action(function (array $data) {
                 return $this->revokeAll(request());
@@ -162,13 +167,13 @@ class ManageApiTokens extends Page
     protected function getDeleteTokenAction(int $tokenId): array
     {
         return \Laravilt\Actions\Action::make('delete-'.$tokenId)
-            ->label('Revoke')
+            ->label(__('laravilt-auth::auth.profile.api_tokens.revoke'))
             ->icon('trash-2')
             ->color('danger')
             ->requiresConfirmation()
-            ->modalHeading('Revoke API Token')
-            ->modalDescription('Are you sure you want to revoke this token? Applications using this token will lose access.')
-            ->modalSubmitActionLabel('Revoke Token')
+            ->modalHeading(__('laravilt-auth::auth.profile.api_tokens.revoke_token'))
+            ->modalDescription(__('laravilt-auth::auth.profile.api_tokens.confirm_revoke'))
+            ->modalSubmitActionLabel(__('laravilt-auth::auth.profile.api_tokens.revoke_token'))
             ->modalIcon('trash-2')
             ->modalIconColor('danger')
             ->url(route($this->getPanel()->getId().'.api-tokens.destroy', ['token' => $tokenId]))

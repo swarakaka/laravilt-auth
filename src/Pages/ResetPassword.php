@@ -15,18 +15,23 @@ use Laravilt\Panel\Pages\Page;
 
 class ResetPassword extends Page
 {
-    protected static ?string $title = 'Reset Password';
+    protected static ?string $title = null;
 
     protected static bool $shouldRegisterNavigation = false;
 
+    public static function getTitle(): string
+    {
+        return __('laravilt-auth::auth.reset_password.title');
+    }
+
     public function getHeading(): string
     {
-        return 'Reset Password';
+        return __('laravilt-auth::auth.reset_password.heading');
     }
 
     public function getSubheading(): ?string
     {
-        return 'Enter your new password.';
+        return __('laravilt-auth::auth.reset_password.subheading');
     }
 
     public function getLayout(): string
@@ -57,14 +62,14 @@ class ResetPassword extends Page
                 ->default(request()->email),
 
             TextInput::make('password')
-                ->label('New Password')
+                ->label(__('laravilt-auth::auth.fields.new_password'))
                 ->password()
                 ->required()
                 ->autofocus()
                 ->tabindex(1),
 
             TextInput::make('password_confirmation')
-                ->label('Confirm Password')
+                ->label(__('laravilt-auth::auth.fields.password_confirmation'))
                 ->password()
                 ->required()
                 ->tabindex(2),
@@ -75,7 +80,7 @@ class ResetPassword extends Page
     {
         return [
             Action::make('reset-password')
-                ->label('Reset Password')
+                ->label(__('laravilt-auth::auth.reset_password.button'))
                 ->preserveState(false)
                 ->preserveScroll(false)
                 ->action(function (array $data) {

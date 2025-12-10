@@ -6,9 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import Modal from '@laravilt/support/components/Modal.vue';
-import FormRenderer from '@laravilt/forms/components/FormRenderer.vue';
+import LaraviltForm from '@laravilt/forms/components/Form.vue';
 import ActionButton from '../../../../../actions/resources/js/components/ActionButton.vue';
 import { useTwoFactor } from '../../composables/useTwoFactor';
+import { useLocalization } from '@/composables/useLocalization';
+
+// Initialize localization
+const { trans } = useLocalization();
 
 interface TwoFactorProvider {
     name: string;
@@ -144,9 +148,9 @@ const handleFinishRecoveryCodes = () => {
 <template>
     <Card>
         <CardHeader>
-            <CardTitle>Two-Factor Authentication</CardTitle>
+            <CardTitle>{{ trans('profile.two_factor.title') }}</CardTitle>
             <CardDescription>
-                Add an additional layer of security to your account using two-factor authentication.
+                {{ trans('profile.two_factor.description') }}
             </CardDescription>
         </CardHeader>
         <CardContent>
@@ -158,15 +162,15 @@ const handleFinishRecoveryCodes = () => {
                         </svg>
                     </div>
                     <div>
-                        <p class="text-sm font-medium">Two-factor authentication is enabled</p>
+                        <p class="text-sm font-medium">{{ trans('profile.two_factor.enabled') }}</p>
                         <p class="text-xs text-muted-foreground">
-                            Method: {{ twoFactorStatus?.method?.toUpperCase() || 'TOTP' }}
+                            {{ trans('profile.two_factor.method', { method: twoFactorStatus?.method?.toUpperCase() || 'TOTP' }) }}
                         </p>
                     </div>
                 </div>
             </div>
             <p v-else class="text-sm text-muted-foreground">
-                Two-factor authentication is not enabled yet. Enable it for additional security.
+                {{ trans('profile.two_factor.not_enabled') }}
             </p>
             <div class="mt-4 flex justify-end">
                 <ActionButton
@@ -175,15 +179,15 @@ const handleFinishRecoveryCodes = () => {
                     @success="handleEnableSuccess"
                 />
                 <Button v-else :variant="is2FAEnabled ? 'outline' : 'default'" @click="handleOpenModal">
-                    {{ is2FAEnabled ? 'Manage' : 'Enable Two-Factor' }}
+                    {{ is2FAEnabled ? trans('profile.two_factor.manage') : trans('profile.two_factor.enable') }}
                 </Button>
             </div>
         </CardContent>
     </Card>
 
     <!-- Two-Factor Modal -->
-    <Modal v-model:open="showModal" :title="is2FAEnabled ? 'Disable Two-Factor Authentication' : 'Enable Two-Factor Authentication'" @close="handleCloseModal">
-        <!-- Step 1: Enable 2FA (select method and password using FormRenderer) -->
+    <Modal v-model:open="showModal" :title="is2FAEnabled ? trans('profile.two_factor.disable_title') : trans('profile.two_factor.enable_title')" @close="handleCloseModal">
+        <!-- Step 1: Enable 2FA (select method and password using Form) -->
         <div v-if="twoFactorStep === 'enable' && twoFactorStatus?.schemas?.enable">
             <Form
                 :action="twoFactorStatus.actions?.enable || '/two-factor/enable'"
@@ -192,13 +196,13 @@ const handleFinishRecoveryCodes = () => {
                 #default="{ errors, processing }"
             >
                 <div class="space-y-4">
-                    <FormRenderer :schema="twoFactorStatus.schemas.enable" />
+                    <LaraviltForm :schema="twoFactorStatus.schemas.enable" />
                 </div>
 
                 <div class="flex justify-end gap-2 pt-4">
-                    <Button variant="outline" type="button" @click="handleCloseModal">Cancel</Button>
+                    <Button variant="outline" type="button" @click="handleCloseModal">{{ trans('common.cancel') }}</Button>
                     <Button type="submit" :disabled="processing || twoFactor.loading.value">
-                        {{ processing || twoFactor.loading.value ? 'Enabling...' : 'Continue' }}
+                        {{ processing || twoFactor.loading.value ? trans('profile.two_factor.enabling') : trans('profile.two_factor.continue') }}
                     </Button>
                 </div>
             </Form>
@@ -208,13 +212,13 @@ const handleFinishRecoveryCodes = () => {
         <div v-else-if="twoFactorStep === 'setup' && selectedProvider?.requiresConfirmation" class="space-y-4">
             <div class="text-center">
                 <p class="text-sm text-muted-foreground mb-4">
-                    Scan this QR code with your authenticator app
+                    {{ trans('profile.two_factor.scan_qr') }}
                 </p>
                 <div v-if="twoFactor.twoFactorData.value?.qr_code" v-html="twoFactor.twoFactorData.value.qr_code" class="flex justify-center"></div>
             </div>
 
             <div class="space-y-2">
-                <Label for="secret">Or enter this code manually</Label>
+                <Label for="secret">{{ trans('profile.two_factor.enter_manually') }}</Label>
                 <Input
                     id="secret"
                     :model-value="twoFactor.twoFactorData.value?.secret"
@@ -230,13 +234,13 @@ const handleFinishRecoveryCodes = () => {
                 #default="{ errors, processing }"
             >
                 <div class="space-y-4">
-                    <FormRenderer :schema="twoFactorStatus?.schemas?.confirm || []" />
+                    <LaraviltForm :schema="twoFactorStatus?.schemas?.confirm || []" />
                 </div>
 
                 <div class="flex justify-end gap-2 pt-4">
-                    <Button variant="outline" type="button" @click="handleCloseModal">Cancel</Button>
+                    <Button variant="outline" type="button" @click="handleCloseModal">{{ trans('common.cancel') }}</Button>
                     <Button type="submit" :disabled="processing || twoFactor.loading.value">
-                        {{ processing || twoFactor.loading.value ? 'Verifying...' : 'Verify Code' }}
+                        {{ processing || twoFactor.loading.value ? trans('profile.two_factor.verifying') : trans('profile.two_factor.verify_code') }}
                     </Button>
                 </div>
             </Form>
@@ -246,10 +250,10 @@ const handleFinishRecoveryCodes = () => {
         <div v-else-if="twoFactorStep === 'verify' && selectedProvider?.requiresSending" class="space-y-4">
             <div class="rounded-lg bg-blue-50 dark:bg-blue-950 p-4">
                 <p class="text-sm font-medium text-blue-900 dark:text-blue-100">
-                    Check your email
+                    {{ trans('profile.two_factor.check_email') }}
                 </p>
                 <p class="text-xs text-blue-700 dark:text-blue-300 mt-1">
-                    We've sent a 6-digit verification code to your email address
+                    {{ trans('profile.two_factor.code_sent') }}
                 </p>
             </div>
 
@@ -260,13 +264,13 @@ const handleFinishRecoveryCodes = () => {
                 #default="{ errors, processing }"
             >
                 <div class="space-y-4">
-                    <FormRenderer :schema="twoFactorStatus?.schemas?.confirm || []" />
+                    <LaraviltForm :schema="twoFactorStatus?.schemas?.confirm || []" />
                 </div>
 
                 <div class="flex justify-end gap-2 pt-4">
-                    <Button variant="outline" type="button" @click="handleCloseModal">Cancel</Button>
+                    <Button variant="outline" type="button" @click="handleCloseModal">{{ trans('common.cancel') }}</Button>
                     <Button type="submit" :disabled="processing || twoFactor.loading.value">
-                        {{ processing || twoFactor.loading.value ? 'Verifying...' : 'Verify Code' }}
+                        {{ processing || twoFactor.loading.value ? trans('profile.two_factor.verifying') : trans('profile.two_factor.verify_code') }}
                     </Button>
                 </div>
             </Form>
@@ -276,10 +280,10 @@ const handleFinishRecoveryCodes = () => {
         <div v-else-if="twoFactorStep === 'recovery'" class="space-y-4">
             <div class="rounded-lg bg-amber-50 dark:bg-amber-950 p-4">
                 <p class="text-sm font-medium text-amber-900 dark:text-amber-100">
-                    Save these recovery codes in a safe place
+                    {{ trans('profile.two_factor.save_recovery') }}
                 </p>
                 <p class="text-xs text-amber-700 dark:text-amber-300 mt-1">
-                    You can use these codes to access your account if you lose your device
+                    {{ trans('profile.two_factor.recovery_warning') }}
                 </p>
             </div>
 
@@ -291,15 +295,15 @@ const handleFinishRecoveryCodes = () => {
 
             <div class="flex justify-end pt-4">
                 <Button @click="handleFinishRecoveryCodes">
-                    I've Saved My Codes
+                    {{ trans('profile.two_factor.saved_codes') }}
                 </Button>
             </div>
         </div>
 
-        <!-- Disable 2FA using FormRenderer -->
+        <!-- Disable 2FA using Form -->
         <div v-else-if="twoFactorStep === 'disable' && twoFactorStatus?.schemas?.disable">
             <p class="text-sm text-muted-foreground mb-4">
-                Enter your password to disable two-factor authentication
+                {{ trans('profile.two_factor.enter_password') }}
             </p>
 
             <Form
@@ -309,13 +313,13 @@ const handleFinishRecoveryCodes = () => {
                 #default="{ errors, processing }"
             >
                 <div class="space-y-4">
-                    <FormRenderer :schema="twoFactorStatus.schemas.disable" />
+                    <LaraviltForm :schema="twoFactorStatus.schemas.disable" />
                 </div>
 
                 <div class="flex justify-end gap-2 pt-4">
-                    <Button variant="outline" type="button" @click="handleCloseModal">Cancel</Button>
+                    <Button variant="outline" type="button" @click="handleCloseModal">{{ trans('common.cancel') }}</Button>
                     <Button variant="destructive" type="submit" :disabled="processing || twoFactor.loading.value">
-                        {{ processing || twoFactor.loading.value ? 'Disabling...' : 'Disable Two-Factor' }}
+                        {{ processing || twoFactor.loading.value ? trans('profile.two_factor.enabling') : trans('profile.two_factor.disable') }}
                     </Button>
                 </div>
             </Form>

@@ -4,6 +4,7 @@ namespace Laravilt\Auth\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 use Symfony\Component\HttpFoundation\Response;
 
 class RequireTwoFactorAuthentication
@@ -21,10 +22,20 @@ class RequireTwoFactorAuthentication
         }
 
         $user = $request->user();
+        $panel = app(\Laravilt\Panel\PanelRegistry::class)->getCurrent();
+
+        // Skip 2FA check if the current panel doesn't have 2FA enabled
+        if (! $panel || ! $panel->hasTwoFactor()) {
+            return $next($request);
+        }
+
+        // Check if the 2FA challenge route exists for this panel
+        $challengeRouteName = $panel->getId().'.two-factor.challenge';
+        if (! Route::has($challengeRouteName)) {
+            return $next($request);
+        }
 
         if ($this->needsTwoFactorChallenge($request, $user)) {
-            $panel = app(\Laravilt\Panel\PanelRegistry::class)->getCurrent();
-
             // Don't redirect if on 2FA challenge/recovery pages or logout
             if (! $request->routeIs('*.two-factor.challenge')
                 && ! $request->routeIs('*.two-factor.challenge.verify')
@@ -37,7 +48,7 @@ class RequireTwoFactorAuthentication
                     $request->session()->put('url.intended', $request->url());
                 }
 
-                return redirect()->route($panel->getId().'.two-factor.challenge');
+                return redirect()->route($challengeRouteName);
             }
         }
 

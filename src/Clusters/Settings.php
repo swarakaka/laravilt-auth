@@ -9,13 +9,28 @@ class Settings extends Cluster
 {
     protected static ?string $navigationIcon = 'user';
 
-    protected static ?string $navigationLabel = 'Settings';
+    protected static ?string $navigationLabel = null;
 
     protected static ?string $slug = 'settings';
 
     protected static bool $shouldRegisterNavigation = true;
 
     protected static ?int $navigationSort = 100;
+
+    public static function getNavigationLabel(): string
+    {
+        return __('laravilt-auth::auth.settings.title');
+    }
+
+    public static function getClusterTitle(): string
+    {
+        return __('laravilt-auth::auth.settings.title');
+    }
+
+    public static function getClusterDescription(): ?string
+    {
+        return __('laravilt-auth::auth.settings.description');
+    }
 
     /**
      * Handle GET request to the cluster index.

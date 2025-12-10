@@ -5,6 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import InputError from '@/components/InputError.vue';
+import { useLocalization } from '@/composables/useLocalization';
+
+// Initialize localization
+const { trans } = useLocalization();
 
 interface Props {
     profileAction: string;
@@ -22,9 +26,9 @@ defineProps<Props>();
 <template>
     <Card>
         <CardHeader>
-            <CardTitle>Profile Information</CardTitle>
+            <CardTitle>{{ trans('profile.information.title') }}</CardTitle>
             <CardDescription>
-                Update your account's profile information and email address.
+                {{ trans('profile.information.description') }}
             </CardDescription>
         </CardHeader>
         <CardContent>
@@ -49,7 +53,7 @@ defineProps<Props>();
 
                 <div class="flex justify-end">
                     <Button type="submit" :disabled="processing">
-                        {{ processing ? 'Saving...' : 'Save Changes' }}
+                        {{ processing ? trans('common.saving') : trans('common.save_changes') }}
                     </Button>
                 </div>
             </Form>
@@ -58,7 +62,7 @@ defineProps<Props>();
                 v-if="!user.email_verified_at"
                 class="mt-4 text-sm text-amber-600 dark:text-amber-400"
             >
-                Your email address is unverified.
+                {{ trans('profile.information.email_unverified') }}
             </p>
         </CardContent>
     </Card>

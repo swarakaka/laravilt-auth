@@ -11,18 +11,23 @@ use Laravilt\Panel\Pages\Page;
 
 class SetPassword extends Page
 {
-    protected static ?string $title = 'Set Password';
+    protected static ?string $title = null;
 
     protected static bool $shouldRegisterNavigation = false;
 
+    public static function getTitle(): string
+    {
+        return __('laravilt-auth::auth.set_password.title');
+    }
+
     public function getHeading(): string
     {
-        return 'Set Your Password';
+        return __('laravilt-auth::auth.set_password.heading');
     }
 
     public function getSubheading(): ?string
     {
-        return 'Please set a password for your account to continue.';
+        return __('laravilt-auth::auth.set_password.subheading');
     }
 
     public function getLayout(): string
@@ -34,15 +39,15 @@ class SetPassword extends Page
     {
         return [
             TextInput::make('password')
-                ->label('New Password')
+                ->label(__('laravilt-auth::auth.fields.new_password'))
                 ->password()
                 ->required()
                 ->rules(['required', Password::defaults(), 'confirmed'])
-                ->helperText('Password must be at least 8 characters.')
+                ->helperText(__('laravilt-auth::auth.set_password.password_hint'))
                 ->tabindex(1),
 
             TextInput::make('password_confirmation')
-                ->label('Confirm Password')
+                ->label(__('laravilt-auth::auth.fields.password_confirmation'))
                 ->password()
                 ->required()
                 ->tabindex(2),
@@ -53,7 +58,7 @@ class SetPassword extends Page
     {
         return [
             Action::make('set-password')
-                ->label('Set Password')
+                ->label(__('laravilt-auth::auth.set_password.button'))
                 ->action(function (array $data) {
                     return $this->setPassword($data);
                 })

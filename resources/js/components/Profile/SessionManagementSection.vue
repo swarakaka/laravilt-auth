@@ -7,6 +7,10 @@ import { Input } from '@/components/ui/input';
 import Modal from '@laravilt/support/components/Modal.vue';
 import { Separator } from '@/components/ui/separator';
 import { useSessionManagement } from '../../composables/useSessionManagement';
+import { useLocalization } from '@/composables/useLocalization';
+
+// Initialize localization
+const { trans } = useLocalization();
 
 const showModal = ref(false);
 const sessionManagement = useSessionManagement();
@@ -49,31 +53,31 @@ const handleCloseModal = () => {
 <template>
     <Card>
         <CardHeader>
-            <CardTitle>Active Sessions</CardTitle>
+            <CardTitle>{{ trans('profile.sessions.title') }}</CardTitle>
             <CardDescription>
-                Manage and log out your active sessions on other browsers and devices.
+                {{ trans('profile.sessions.description') }}
             </CardDescription>
         </CardHeader>
         <CardContent>
             <p class="text-sm text-muted-foreground">
-                You can see all devices where you're currently logged in and log out of any session.
+                {{ trans('profile.sessions.info') }}
             </p>
             <div class="mt-4 flex justify-end">
-                <Button variant="outline" @click="handleOpenModal">Manage Sessions</Button>
+                <Button variant="outline" @click="handleOpenModal">{{ trans('profile.sessions.manage') }}</Button>
             </div>
         </CardContent>
     </Card>
 
     <!-- Sessions Modal -->
-    <Modal v-model:open="showModal" title="Active Sessions" description="Manage your browser sessions on other devices" @close="handleCloseModal">
+    <Modal v-model:open="showModal" :title="trans('profile.sessions.title')" :description="trans('profile.sessions.modal_description')" @close="handleCloseModal">
         <div class="space-y-4">
             <p class="text-sm text-muted-foreground">
-                If necessary, you may log out of all of your other browser sessions across all of your devices.
+                {{ trans('profile.sessions.logout_info') }}
             </p>
 
             <div v-if="sessionManagement.loading.value && sessionManagement.sessions.value.length === 0" class="py-8 text-center">
                 <div class="inline-block size-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent"></div>
-                <p class="mt-2 text-sm text-muted-foreground">Loading sessions...</p>
+                <p class="mt-2 text-sm text-muted-foreground">{{ trans('profile.sessions.loading') }}</p>
             </div>
 
             <div v-else-if="sessionManagement.sessions.value.length > 0" class="space-y-3">
@@ -89,13 +93,13 @@ const handleCloseModal = () => {
                     </div>
                     <div class="flex-1">
                         <p class="text-sm font-medium">
-                            {{ session.is_current ? 'This Device' : `${session.device.browser} - ${session.device.platform}` }}
+                            {{ session.is_current ? trans('profile.sessions.this_device') : `${session.device.browser} - ${session.device.platform}` }}
                         </p>
                         <p class="text-xs text-muted-foreground">
                             {{ session.ip_address }} • {{ session.last_active_at }}
                         </p>
                     </div>
-                    <span v-if="session.is_current" class="text-xs text-green-600 dark:text-green-400">Active now</span>
+                    <span v-if="session.is_current" class="text-xs text-green-600 dark:text-green-400">{{ trans('profile.sessions.active_now') }}</span>
                     <Button
                         v-else
                         size="sm"
@@ -103,7 +107,7 @@ const handleCloseModal = () => {
                         @click="handleLogoutSession(session.id)"
                         :disabled="sessionManagement.loading.value"
                     >
-                        Logout
+                        {{ trans('common.logout') }}
                     </Button>
                 </div>
             </div>
@@ -115,26 +119,26 @@ const handleCloseModal = () => {
             <Separator />
 
             <div class="space-y-2">
-                <Label for="session-password">Confirm Password</Label>
+                <Label for="session-password">{{ trans('profile.sessions.confirm_password') }}</Label>
                 <Input
                     id="session-password"
                     v-model="sessionPassword"
                     type="password"
-                    placeholder="Enter your password"
+                    :placeholder="trans('profile.sessions.password_placeholder')"
                 />
                 <p class="text-xs text-muted-foreground">
-                    Enter your password to log out from other sessions
+                    {{ trans('profile.sessions.password_hint') }}
                 </p>
             </div>
         </div>
         <template #footer>
-            <Button variant="outline" @click="handleCloseModal">Close</Button>
+            <Button variant="outline" @click="handleCloseModal">{{ trans('common.close') }}</Button>
             <Button
                 variant="destructive"
                 @click="handleLogoutOthers"
                 :disabled="sessionManagement.loading.value || !sessionPassword || sessionManagement.sessions.value.filter(s => !s.is_current).length === 0"
             >
-                {{ sessionManagement.loading.value ? 'Logging out...' : 'Log Out Other Sessions' }}
+                {{ sessionManagement.loading.value ? trans('profile.sessions.logging_out') : trans('profile.sessions.logout_others') }}
             </Button>
         </template>
     </Modal>

@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
+import { ref, onMounted } from 'vue';
 import PanelLayout from '@laravilt/panel/layouts/PanelLayout.vue';
+import { Skeleton } from '@/components/ui/skeleton';
 import ProfileInformationSection from '../components/Profile/ProfileInformationSection.vue';
 import UpdatePasswordSection from '../components/Profile/UpdatePasswordSection.vue';
 import TwoFactorSection from '../components/Profile/TwoFactorSection.vue';
@@ -10,6 +12,17 @@ import PasskeysSection from '../components/Profile/PasskeysSection.vue';
 import MagicLinksSection from '../components/Profile/MagicLinksSection.vue';
 import ConnectedAccountsSection from '../components/Profile/ConnectedAccountsSection.vue';
 import DeleteAccountSection from '../components/Profile/DeleteAccountSection.vue';
+import { useLocalization } from '@/composables/useLocalization';
+
+const { trans } = useLocalization();
+
+const isLoading = ref(true);
+
+onMounted(() => {
+    setTimeout(() => {
+        isLoading.value = false;
+    }, 100);
+});
 
 interface Props {
     page: {
@@ -57,26 +70,54 @@ defineProps<Props>();
                 <div class="mb-6">
                     <h1 class="text-3xl font-bold">{{ page.heading }}</h1>
                     <p class="text-muted-foreground">
-                        Manage your account settings and preferences
+                        {{ trans('profile.page.subheading') }}
                     </p>
                 </div>
 
-                <!-- Status Messages -->
-                <div
-                    v-if="status === 'profile-updated'"
-                    class="mb-4 rounded-md bg-green-50 dark:bg-green-950 p-4 text-sm font-medium text-green-600 dark:text-green-400"
-                >
-                    Profile updated successfully.
+                <!-- Loading Skeleton -->
+                <div v-if="isLoading" v-cloak class="grid gap-6">
+                    <!-- Section Skeleton 1 -->
+                    <div class="rounded-lg border p-6 space-y-4">
+                        <Skeleton class="h-6 w-48" />
+                        <Skeleton class="h-4 w-64" />
+                        <div class="space-y-3 pt-4">
+                            <Skeleton class="h-10 w-full" />
+                            <Skeleton class="h-10 w-full" />
+                        </div>
+                        <Skeleton class="h-10 w-32" />
+                    </div>
+
+                    <!-- Section Skeleton 2 -->
+                    <div class="rounded-lg border p-6 space-y-4">
+                        <Skeleton class="h-6 w-48" />
+                        <Skeleton class="h-4 w-64" />
+                        <div class="space-y-3 pt-4">
+                            <Skeleton class="h-10 w-full" />
+                            <Skeleton class="h-10 w-full" />
+                            <Skeleton class="h-10 w-full" />
+                        </div>
+                        <Skeleton class="h-10 w-32" />
+                    </div>
                 </div>
 
-                <div
-                    v-if="status === 'password-updated'"
-                    class="mb-4 rounded-md bg-green-50 dark:bg-green-950 p-4 text-sm font-medium text-green-600 dark:text-green-400"
-                >
-                    Password updated successfully.
-                </div>
+                <!-- Actual Content -->
+                <div v-else v-cloak>
+                    <!-- Status Messages -->
+                    <div
+                        v-if="status === 'profile-updated'"
+                        class="mb-4 rounded-md bg-green-50 dark:bg-green-950 p-4 text-sm font-medium text-green-600 dark:text-green-400"
+                    >
+                        {{ trans('profile.page.profile_updated') }}
+                    </div>
 
-                <div class="grid gap-6">
+                    <div
+                        v-if="status === 'password-updated'"
+                        class="mb-4 rounded-md bg-green-50 dark:bg-green-950 p-4 text-sm font-medium text-green-600 dark:text-green-400"
+                    >
+                        {{ trans('profile.page.password_updated') }}
+                    </div>
+
+                    <div class="grid gap-6">
                     <!-- Profile Information -->
                     <ProfileInformationSection
                         :profile-action="profileAction"
@@ -118,6 +159,7 @@ defineProps<Props>();
                         :delete-action="deleteAction"
                         :delete-schema="page.deleteSchema"
                     />
+                    </div>
                 </div>
             </div>
         </div>

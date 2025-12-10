@@ -1,22 +1,26 @@
 <script setup lang="ts">
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useLocalization } from '@/composables/useLocalization';
+
+// Initialize localization
+const { trans } = useLocalization();
 </script>
 
 <template>
     <Card>
         <CardHeader>
-            <CardTitle>Magic Links</CardTitle>
+            <CardTitle>{{ trans('profile.magic_links.title') }}</CardTitle>
             <CardDescription>
-                Configure magic link authentication for passwordless sign-in via email.
+                {{ trans('profile.magic_links.description') }}
             </CardDescription>
         </CardHeader>
         <CardContent>
             <p class="text-sm text-muted-foreground">
-                Magic links let you sign in by clicking a link sent to your email. This feature is automatically available when enabled in your authentication settings.
+                {{ trans('profile.magic_links.info') }}
             </p>
             <div class="mt-4 rounded-lg bg-muted p-4">
                 <p class="text-sm">
-                    Magic link authentication is ready to use. When you sign in, you can choose to receive a magic link via email instead of entering your password.
+                    {{ trans('profile.magic_links.ready_to_use') }}
                 </p>
             </div>
         </CardContent>

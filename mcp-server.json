@@ -1,0 +1,151 @@
+{
+  "name": "laravilt-auth",
+  "version": "1.0.0",
+  "description": "MCP Server for Laravilt Auth Package Documentation",
+  "mcpServers": {
+    "laravilt-auth-docs": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "./docs"
+      ],
+      "metadata": {
+        "description": "Provides access to Laravilt Auth package documentation",
+        "categories": ["auth", "authentication", "laravel", "documentation"]
+      }
+    }
+  },
+  "resources": [
+    {
+      "uri": "laravilt://auth/docs/index",
+      "name": "Laravilt Auth Documentation",
+      "description": "Complete documentation for the Laravilt Auth package",
+      "mimeType": "text/markdown"
+    },
+    {
+      "uri": "laravilt://auth/docs/mcp-server",
+      "name": "MCP Server Integration Guide",
+      "description": "Guide for MCP server integration and auth configuration",
+      "mimeType": "text/markdown"
+    },
+    {
+      "uri": "laravilt://auth/events",
+      "name": "Auth Events Reference",
+      "description": "Complete reference for authentication events",
+      "mimeType": "text/markdown"
+    },
+    {
+      "uri": "laravilt://auth/features",
+      "name": "Auth Features Guide",
+      "description": "Guide for configuring authentication features",
+      "mimeType": "text/markdown"
+    }
+  ],
+  "tools": [
+    {
+      "name": "search_auth_docs",
+      "description": "Search the Laravilt Auth documentation for specific topics",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "Search query (e.g., 'two-factor', 'social login', 'passkeys')"
+          }
+        },
+        "required": ["query"]
+      }
+    },
+    {
+      "name": "get_auth_config",
+      "description": "Get authentication configuration options and examples",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "feature": {
+            "type": "string",
+            "description": "Feature name (e.g., 'login', 'registration', 'two-factor', 'social', 'passkeys', 'magic-links')"
+          }
+        },
+        "required": ["feature"]
+      }
+    },
+    {
+      "name": "list_auth_events",
+      "description": "List all available authentication events",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "type": "string",
+            "description": "Event category (e.g., 'login', 'registration', 'otp', 'two-factor', 'password', 'social', 'passkey', 'magic-link')"
+          }
+        }
+      }
+    },
+    {
+      "name": "get_event_example",
+      "description": "Get example code for listening to a specific auth event",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "event": {
+            "type": "string",
+            "description": "Event class name (e.g., 'LoginSuccessful', 'RegistrationCompleted', 'TwoFactorEnabled')"
+          }
+        },
+        "required": ["event"]
+      }
+    },
+    {
+      "name": "get_auth_page_example",
+      "description": "Get example code for customizing authentication pages",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "string",
+            "description": "Page type (e.g., 'login', 'register', 'forgot-password', 'reset-password', 'verify-email', 'two-factor-challenge')"
+          }
+        },
+        "required": ["page"]
+      }
+    },
+    {
+      "name": "get_social_provider_config",
+      "description": "Get configuration example for a social authentication provider",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "provider": {
+            "type": "string",
+            "description": "Provider name (e.g., 'google', 'github', 'facebook', 'twitter', 'linkedin')"
+          }
+        },
+        "required": ["provider"]
+      }
+    },
+    {
+      "name": "install_auth",
+      "description": "Install the Auth package. Uses: php artisan auth:install",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "force": {
+            "type": "boolean",
+            "description": "Overwrite existing files"
+          },
+          "withoutAssets": {
+            "type": "boolean",
+            "description": "Skip asset publishing"
+          },
+          "withoutMigrations": {
+            "type": "boolean",
+            "description": "Skip running migrations"
+          }
+        }
+      }
+    }
+  ]
+}

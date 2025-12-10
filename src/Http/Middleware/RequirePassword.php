@@ -4,6 +4,7 @@ namespace Laravilt\Auth\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 use Symfony\Component\HttpFoundation\Response;
 
 class RequirePassword
@@ -21,13 +22,23 @@ class RequirePassword
         }
 
         $user = $request->user();
+        $panel = app(\Laravilt\Panel\PanelRegistry::class)->getCurrent();
 
-        if ($this->needsPassword($user)) {
+        // Skip if no panel context
+        if (! $panel) {
+            return $next($request);
+        }
+
+        // Check if the set-password route exists for this panel
+        $setPasswordRouteName = $panel->getId().'.auth.set-password';
+        if (! Route::has($setPasswordRouteName)) {
+            return $next($request);
+        }
+
+        if ($this->needsPassword($user, $panel)) {
             // Don't redirect if already on the set password page
             if (! $request->routeIs('*.auth.set-password') && ! $request->routeIs('*.auth.set-password.store')) {
-                return redirect()->route(
-                    app(\Laravilt\Panel\PanelRegistry::class)->getCurrent()->getId().'.auth.set-password'
-                );
+                return redirect()->route($setPasswordRouteName);
             }
         }
 
@@ -37,13 +48,10 @@ class RequirePassword
     /**
      * Check if user needs to set a password.
      */
-    protected function needsPassword($user): bool
+    protected function needsPassword($user, $panel): bool
     {
-        // Get current panel
-        $panel = app(\Laravilt\Panel\PanelRegistry::class)->getCurrent();
-
         // If panel doesn't require password for social login, skip check
-        if ($panel && ! $panel->shouldRequirePasswordForSocialLogin()) {
+        if (! $panel->shouldRequirePasswordForSocialLogin()) {
             return false;
         }
 

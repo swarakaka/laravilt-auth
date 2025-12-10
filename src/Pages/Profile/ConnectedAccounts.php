@@ -11,7 +11,7 @@ use Laravilt\Panel\Pages\Page;
 
 class ConnectedAccounts extends Page
 {
-    protected static ?string $title = 'Connected Accounts';
+    protected static ?string $title = null;
 
     protected static ?string $cluster = Settings::class;
 
@@ -21,14 +21,19 @@ class ConnectedAccounts extends Page
 
     protected ?string $component = 'laravilt-auth/ConnectedAccountsPage';
 
+    public static function getTitle(): string
+    {
+        return __('laravilt-auth::auth.profile.connected_accounts.title');
+    }
+
     public function getHeading(): string
     {
-        return 'Connected Accounts';
+        return __('laravilt-auth::auth.profile.connected_accounts.title');
     }
 
     public function getSubheading(): ?string
     {
-        return 'Manage your connected social accounts.';
+        return __('laravilt-auth::auth.profile.connected_accounts.description');
     }
 
     public function getLayout(): string
@@ -96,7 +101,7 @@ class ConnectedAccounts extends Page
             if (is_null($connectedAccount)) {
                 // Not connected - provide connect action (redirect to OAuth)
                 $connectAction = [
-                    'label' => 'Connect',
+                    'label' => __('laravilt-auth::auth.profile.connected_accounts.connect'),
                     'url' => route($panel->getId().'.auth.social.redirect', ['provider' => $providerName]),
                     'method' => 'get',
                     'type' => 'link',
@@ -104,12 +109,12 @@ class ConnectedAccounts extends Page
             } else {
                 // Connected - provide disconnect action
                 $disconnectAction = Action::make('disconnect-'.$providerName)
-                    ->label('Disconnect')
+                    ->label(__('laravilt-auth::auth.profile.connected_accounts.disconnect'))
                     ->color('danger')
                     ->requiresConfirmation()
-                    ->modalHeading('Disconnect '.$providerName)
-                    ->modalDescription('Are you sure you want to disconnect your '.$providerName.' account?')
-                    ->modalSubmitActionLabel('Disconnect')
+                    ->modalHeading(__('laravilt-auth::auth.profile.connected_accounts.disconnect').' '.ucfirst($providerName))
+                    ->modalDescription(__('laravilt-auth::auth.profile.connected_accounts.confirm_disconnect', ['provider' => ucfirst($providerName)]))
+                    ->modalSubmitActionLabel(__('laravilt-auth::auth.profile.connected_accounts.disconnect'))
                     ->action(function () use ($providerName) {
                         return $this->disconnectAccount($providerName);
                     })

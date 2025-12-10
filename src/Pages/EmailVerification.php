@@ -11,18 +11,23 @@ use Laravilt\Panel\Pages\Page;
 
 class EmailVerification extends Page
 {
-    protected static ?string $title = 'Verify Email';
+    protected static ?string $title = null;
 
     protected static bool $shouldRegisterNavigation = false;
 
+    public static function getTitle(): string
+    {
+        return __('laravilt-auth::auth.verify_email.title');
+    }
+
     public function getHeading(): string
     {
-        return 'Verify Your Email';
+        return __('laravilt-auth::auth.verify_email.heading');
     }
 
     public function getSubheading(): ?string
     {
-        return 'Click the button below to resend the verification email.';
+        return __('laravilt-auth::auth.verify_email.subheading');
     }
 
     public function getLayout(): string
@@ -63,7 +68,7 @@ class EmailVerification extends Page
 
         $user->sendEmailVerificationNotification();
 
-        return back()->with('status', 'Verification link sent!');
+        return back()->with('status', __('laravilt-auth::auth.verify_email.sent'));
     }
 
     /**
@@ -108,7 +113,7 @@ class EmailVerification extends Page
     {
         return [
             Action::make('resend-verification')
-                ->label('Resend Verification Email')
+                ->label(__('laravilt-auth::auth.verify_email.resend'))
                 ->action(function (array $data) {
                     return $this->resendVerification($data);
                 }),
@@ -127,7 +132,7 @@ class EmailVerification extends Page
 
         $user->sendEmailVerificationNotification();
 
-        return back()->with('status', 'Verification link sent!');
+        return back()->with('status', __('laravilt-auth::auth.verify_email.sent'));
     }
 
     protected function getInertiaProps(): array

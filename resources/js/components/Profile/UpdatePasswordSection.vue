@@ -5,6 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import InputError from '@/components/InputError.vue';
+import { useLocalization } from '@/composables/useLocalization';
+
+// Initialize localization
+const { trans } = useLocalization();
 
 interface Props {
     passwordAction: string;
@@ -17,9 +21,9 @@ defineProps<Props>();
 <template>
     <Card>
         <CardHeader>
-            <CardTitle>Update Password</CardTitle>
+            <CardTitle>{{ trans('profile.password.title') }}</CardTitle>
             <CardDescription>
-                Ensure your account is using a long, random password to stay secure.
+                {{ trans('profile.password.description') }}
             </CardDescription>
         </CardHeader>
         <CardContent>
@@ -44,7 +48,7 @@ defineProps<Props>();
 
                 <div class="flex justify-end">
                     <Button type="submit" :disabled="processing">
-                        {{ processing ? 'Updating...' : 'Update Password' }}
+                        {{ processing ? trans('profile.password.updating') : trans('profile.password.update') }}
                     </Button>
                 </div>
             </Form>

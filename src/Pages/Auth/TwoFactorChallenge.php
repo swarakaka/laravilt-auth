@@ -15,20 +15,25 @@ use Laravilt\Panel\Pages\Page;
 
 class TwoFactorChallenge extends Page
 {
-    protected static ?string $title = 'Two-Factor Authentication';
+    protected static ?string $title = null;
 
     protected static bool $shouldRegisterNavigation = false;
 
     protected ?string $component = 'laravilt-auth/TwoFactorChallengePage';
 
+    public static function getTitle(): string
+    {
+        return __('laravilt-auth::auth.two_factor_challenge.title');
+    }
+
     public function getHeading(): string
     {
-        return 'Two-Factor Authentication';
+        return __('laravilt-auth::auth.two_factor_challenge.heading');
     }
 
     public function getSubheading(): ?string
     {
-        return 'Choose your preferred verification method';
+        return __('laravilt-auth::auth.two_factor_challenge.subheading');
     }
 
     public function getLayout(): string
@@ -60,7 +65,7 @@ class TwoFactorChallenge extends Page
     {
         return [
             PinInput::make('code')
-                ->label('Authentication Code')
+                ->label(__('laravilt-auth::auth.fields.code'))
                 ->required()
                 ->tabindex(1)
                 ->length(6)
@@ -78,7 +83,7 @@ class TwoFactorChallenge extends Page
     protected function getVerifyAction(): Action
     {
         return Action::make('verify-2fa')
-            ->label('Verify')
+            ->label(__('laravilt-auth::auth.two_factor_challenge.verify_button'))
             ->action(function (array $data) {
                 return $this->verifyTwoFactor($data);
             });
@@ -248,6 +253,57 @@ class TwoFactorChallenge extends Page
         ];
     }
 
+    /**
+     * Resend 2FA email code.
+     */
+    public function resend(Request $request)
+    {
+        $panel = $this->getPanel();
+        $guard = $panel->getAuthGuard() ?? 'web';
+
+        // Get the user from the session
+        $userId = $request->session()->get('login.id');
+
+        if (! $userId) {
+            return response()->json([
+                'error' => __('laravilt-auth::auth.two_factor_challenge.session_expired'),
+            ], 422);
+        }
+
+        $provider = config("auth.guards.{$guard}.provider");
+        $modelClass = config("auth.providers.{$provider}.model");
+        $user = $modelClass::find($userId);
+
+        if (! $user) {
+            return response()->json([
+                'error' => __('laravilt-auth::auth.two_factor_challenge.user_not_found'),
+            ], 422);
+        }
+
+        // Only resend for email 2FA method
+        if ($user->two_factor_method !== 'email') {
+            return response()->json([
+                'error' => __('laravilt-auth::auth.two_factor_challenge.resend_not_available'),
+            ], 422);
+        }
+
+        $manager = $panel->getTwoFactorProviderManager();
+        $driver = $manager?->getDriver('email');
+
+        if (! $driver) {
+            return response()->json([
+                'error' => __('laravilt-auth::auth.two_factor_challenge.method_not_available'),
+            ], 422);
+        }
+
+        // Send new code
+        $driver->send($user);
+
+        return response()->json([
+            'message' => __('laravilt-auth::auth.two_factor_challenge.code_resent'),
+        ]);
+    }
+
     protected function getInertiaProps(): array
     {
         $panel = $this->getPanel();
@@ -255,19 +311,24 @@ class TwoFactorChallenge extends Page
 
         // Get the user from the session (if they're in the middle of 2FA challenge)
         $userId = request()->session()->get('login.id');
+        $userTwoFactorMethod = null;
 
         if ($userId) {
             $provider = config("auth.guards.{$guard}.provider");
             $modelClass = config("auth.providers.{$provider}.model");
             $user = $modelClass::find($userId);
 
-            // If user has email 2FA enabled, send the code
-            if ($user && $user->two_factor_method === 'email') {
-                $manager = $panel->getTwoFactorProviderManager();
-                $driver = $manager?->getDriver('email');
+            if ($user) {
+                $userTwoFactorMethod = $user->two_factor_method;
 
-                if ($driver) {
-                    $driver->send($user);
+                // If user has email 2FA enabled, send the code
+                if ($userTwoFactorMethod === 'email') {
+                    $manager = $panel->getTwoFactorProviderManager();
+                    $driver = $manager?->getDriver('email');
+
+                    if ($driver) {
+                        $driver->send($user);
+                    }
                 }
             }
         }
@@ -280,6 +341,8 @@ class TwoFactorChallenge extends Page
             'passkeyLoginUrl' => route($panel->getId().'.passkey.login'),
             'hasMagicLinks' => $panel->hasMagicLinks(),
             'magicLinkSendUrl' => route($panel->getId().'.magic-link.send'),
+            'userTwoFactorMethod' => $userTwoFactorMethod,
+            'resendUrl' => route($panel->getId().'.two-factor.resend'),
         ];
     }
 }

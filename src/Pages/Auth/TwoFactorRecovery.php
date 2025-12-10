@@ -2,6 +2,7 @@
 
 namespace Laravilt\Auth\Pages\Auth;
 
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 use Laravel\Fortify\Features;
@@ -12,18 +13,23 @@ use Laravilt\Panel\Pages\Page;
 
 class TwoFactorRecovery extends Page
 {
-    protected static ?string $title = 'Two-Factor Recovery';
+    protected static ?string $title = null;
 
     protected static bool $shouldRegisterNavigation = false;
 
+    public static function getTitle(): string
+    {
+        return __('laravilt-auth::auth.two_factor_recovery.title');
+    }
+
     public function getHeading(): string
     {
-        return 'Two-Factor Recovery';
+        return __('laravilt-auth::auth.two_factor_recovery.heading');
     }
 
     public function getSubheading(): ?string
     {
-        return 'Enter one of your emergency recovery codes.';
+        return __('laravilt-auth::auth.two_factor_recovery.subheading');
     }
 
     public function getLayout(): string
@@ -31,15 +37,20 @@ class TwoFactorRecovery extends Page
         return PageLayout::Card->value;
     }
 
+    public function store(Request $request)
+    {
+        return $this->verifyRecoveryCode($request->all());
+    }
+
     protected function getSchema(): array
     {
         return [
             TextInput::make('recovery_code')
-                ->label('Recovery Code')
+                ->label(__('laravilt-auth::auth.fields.recovery_code'))
                 ->required()
                 ->autofocus()
                 ->tabindex(1)
-                ->placeholder('Enter your recovery code'),
+                ->placeholder(__('laravilt-auth::auth.two_factor_recovery.placeholder')),
         ];
     }
 
@@ -53,7 +64,7 @@ class TwoFactorRecovery extends Page
     protected function getVerifyRecoveryAction(): Action
     {
         return Action::make('verify-recovery-code')
-            ->label('Verify')
+            ->label(__('laravilt-auth::auth.two_factor_recovery.button'))
             ->preserveScroll(false)
             ->preserveState(false)
             ->action(function (array $data) {
@@ -79,7 +90,7 @@ class TwoFactorRecovery extends Page
 
         if (! $user) {
             throw ValidationException::withMessages([
-                'recovery_code' => ['The recovery code is invalid.'],
+                'recovery_code' => [__('laravilt-auth::auth.two_factor_recovery.invalid_code')],
             ]);
         }
 
@@ -88,7 +99,7 @@ class TwoFactorRecovery extends Page
 
         if (! $user->two_factor_recovery_codes) {
             throw ValidationException::withMessages([
-                'recovery_code' => ['The recovery code is invalid.'],
+                'recovery_code' => [__('laravilt-auth::auth.two_factor_recovery.invalid_code')],
             ]);
         }
 
@@ -96,7 +107,7 @@ class TwoFactorRecovery extends Page
 
         if (! in_array($recoveryCode, $recoveryCodes)) {
             throw ValidationException::withMessages([
-                'recovery_code' => ['The recovery code is invalid.'],
+                'recovery_code' => [__('laravilt-auth::auth.two_factor_recovery.invalid_code')],
             ]);
         }
 

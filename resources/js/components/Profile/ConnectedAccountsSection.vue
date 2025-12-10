@@ -4,6 +4,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import Modal from '@laravilt/support/components/Modal.vue';
 import { useConnectedAccounts } from '../../composables/useConnectedAccounts';
+import { useLocalization } from '@/composables/useLocalization';
+
+// Initialize localization
+const { trans } = useLocalization();
 
 const showModal = ref(false);
 const connectedAccounts = useConnectedAccounts();
@@ -19,7 +23,7 @@ const handleConnectAccount = (provider: string) => {
 };
 
 const handleDisconnectAccount = async (provider: string) => {
-    if (!confirm(`Are you sure you want to disconnect your ${provider} account?`)) {
+    if (!confirm(trans('profile.connected_accounts.confirm_disconnect', { provider }))) {
         return;
     }
 
@@ -38,32 +42,32 @@ const handleCloseModal = () => {
 <template>
     <Card>
         <CardHeader>
-            <CardTitle>Connected Accounts</CardTitle>
+            <CardTitle>{{ trans('profile.connected_accounts.title') }}</CardTitle>
             <CardDescription>
-                Manage third-party accounts connected to your profile for social authentication.
+                {{ trans('profile.connected_accounts.description') }}
             </CardDescription>
         </CardHeader>
         <CardContent>
             <p class="text-sm text-muted-foreground">
-                You can connect or disconnect social accounts like Google, GitHub, and more.
+                {{ trans('profile.connected_accounts.info') }}
             </p>
             <div class="mt-4 flex justify-end">
-                <Button variant="outline" @click="handleOpenModal">Manage Connections</Button>
+                <Button variant="outline" @click="handleOpenModal">{{ trans('profile.connected_accounts.manage') }}</Button>
             </div>
         </CardContent>
     </Card>
 
     <!-- Connected Accounts Modal -->
-    <Modal v-model:open="showModal" title="Connected Accounts" description="Manage your social account connections" @close="handleCloseModal">
+    <Modal v-model:open="showModal" :title="trans('profile.connected_accounts.title')" :description="trans('profile.connected_accounts.modal_description')" @close="handleCloseModal">
         <div class="space-y-4">
             <p class="text-sm text-muted-foreground">
-                Connect your social accounts to sign in quickly and securely.
+                {{ trans('profile.connected_accounts.social_info') }}
             </p>
 
             <!-- Loading State -->
             <div v-if="connectedAccounts.loading.value && connectedAccounts.providers.value.length === 0" class="py-8 text-center">
                 <div class="inline-block size-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent"></div>
-                <p class="mt-2 text-sm text-muted-foreground">Loading connected accounts...</p>
+                <p class="mt-2 text-sm text-muted-foreground">{{ trans('profile.connected_accounts.loading') }}</p>
             </div>
 
             <!-- Providers List -->
@@ -81,10 +85,10 @@ const handleCloseModal = () => {
                     <div class="flex-1">
                         <p class="text-sm font-medium">{{ provider.label }}</p>
                         <p v-if="provider.connected && provider.account" class="text-xs text-muted-foreground">
-                            Connected as {{ provider.account.name || provider.account.email }}
+                            {{ trans('profile.connected_accounts.connected_as') }} {{ provider.account.name || provider.account.email }}
                         </p>
                         <p v-else class="text-xs text-muted-foreground">
-                            Not connected
+                            {{ trans('profile.connected_accounts.not_connected') }}
                         </p>
                     </div>
                     <Button
@@ -94,7 +98,7 @@ const handleCloseModal = () => {
                         @click="handleDisconnectAccount(provider.name)"
                         :disabled="connectedAccounts.loading.value"
                     >
-                        Disconnect
+                        {{ trans('profile.connected_accounts.disconnect') }}
                     </Button>
                     <Button
                         v-else
@@ -102,13 +106,13 @@ const handleCloseModal = () => {
                         @click="handleConnectAccount(provider.name)"
                         :disabled="connectedAccounts.loading.value"
                     >
-                        Connect
+                        {{ trans('profile.connected_accounts.connect') }}
                     </Button>
                 </div>
             </div>
 
             <div v-else class="text-center py-4 text-sm text-muted-foreground">
-                No social providers configured.
+                {{ trans('profile.connected_accounts.no_providers') }}
             </div>
 
             <p v-if="connectedAccounts.error.value" class="text-sm text-destructive">
@@ -117,7 +121,7 @@ const handleCloseModal = () => {
         </div>
 
         <template #footer>
-            <Button variant="outline" @click="handleCloseModal">Close</Button>
+            <Button variant="outline" @click="handleCloseModal">{{ trans('common.close') }}</Button>
         </template>
     </Modal>
 </template>

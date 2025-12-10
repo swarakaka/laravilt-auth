@@ -12,7 +12,7 @@ use Laravilt\Panel\Pages\Page;
 
 class Profile extends Page
 {
-    protected static ?string $title = 'Profile';
+    protected static ?string $title = null;
 
     protected static ?string $cluster = Settings::class;
 
@@ -20,14 +20,19 @@ class Profile extends Page
 
     protected static bool $shouldRegisterNavigation = false;
 
+    public static function getTitle(): string
+    {
+        return __('laravilt-auth::auth.profile.information.title');
+    }
+
     public function getHeading(): string
     {
-        return 'Profile Information';
+        return __('laravilt-auth::auth.profile.information.title');
     }
 
     public function getSubheading(): ?string
     {
-        return 'Update your account profile information.';
+        return __('laravilt-auth::auth.profile.information.description');
     }
 
     public function getLayout(): string
@@ -43,13 +48,13 @@ class Profile extends Page
 
         return [
             TextInput::make('name')
-                ->label('Name')
+                ->label(__('laravilt-auth::auth.fields.name'))
                 ->default($user->name ?? '')
                 ->required()
                 ->tabindex(1),
 
             TextInput::make('email')
-                ->label('Email')
+                ->label(__('laravilt-auth::auth.fields.email'))
                 ->email()
                 ->default($user->email ?? '')
                 ->required()
@@ -61,7 +66,7 @@ class Profile extends Page
     {
         return [
             Action::make('update-profile')
-                ->label('Update Profile')
+                ->label(__('laravilt-auth::auth.profile.update_profile'))
                 ->action(function (array $data) {
                     return $this->updateProfile($data);
                 }),
@@ -89,7 +94,7 @@ class Profile extends Page
         // Update user
         $user->update($validated);
 
-        notify('Profile updated successfully.');
+        notify(__('laravilt-auth::auth.profile.page.profile_updated'));
 
         return back();
     }

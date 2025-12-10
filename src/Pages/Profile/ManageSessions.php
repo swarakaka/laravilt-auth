@@ -10,7 +10,7 @@ use Laravilt\Panel\Pages\Page;
 
 class ManageSessions extends Page
 {
-    protected static ?string $title = 'Browser Sessions';
+    protected static ?string $title = null;
 
     protected static ?string $cluster = Settings::class;
 
@@ -20,14 +20,19 @@ class ManageSessions extends Page
 
     protected ?string $component = 'laravilt-auth/ManageSessionsPage';
 
+    public static function getTitle(): string
+    {
+        return __('laravilt-auth::auth.profile.sessions.title');
+    }
+
     public function getHeading(): string
     {
-        return 'Browser Sessions';
+        return __('laravilt-auth::auth.profile.sessions.title');
     }
 
     public function getSubheading(): ?string
     {
-        return 'Manage and log out your active sessions on other browsers and devices.';
+        return __('laravilt-auth::auth.profile.sessions.description');
     }
 
     public function getLayout(): string

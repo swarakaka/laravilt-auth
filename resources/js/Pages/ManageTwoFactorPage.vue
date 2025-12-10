@@ -1,20 +1,38 @@
 <script setup lang="ts">
 import { Form, Head } from '@inertiajs/vue3';
-import { computed, ref } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import FormRenderer from '@laravilt/forms/components/FormRenderer.vue';
+import LaraviltForm from '@laravilt/forms/components/Form.vue';
 import ErrorProvider from '@laravilt/forms/components/ErrorProvider.vue';
 import SettingsLayout from '@laravilt/panel/layouts/SettingsLayout.vue';
 import { CheckCircle2, Shield, Key, Download } from 'lucide-vue-next';
+import { useLocalization } from '@laravilt/support/composables';
+
+const { trans } = useLocalization();
+
+const isLoading = ref(true);
+
+onMounted(() => {
+    // Small delay to ensure smooth transition
+    setTimeout(() => {
+        isLoading.value = false;
+    }, 100);
+});
 
 interface PageData {
     heading: string;
     subheading?: string | null;
 }
 
+interface BreadcrumbItem {
+    label: string;
+    url: string | null;
+}
+
 const props = defineProps<{
     page: PageData;
+    breadcrumbs?: BreadcrumbItem[];
     twoFactorEnabled: boolean;
     twoFactorMethod?: string | null;
     qrCode?: string | null;
@@ -33,6 +51,15 @@ const props = defineProps<{
     clusterTitle?: string;
     clusterDescription?: string;
 }>();
+
+// Transform breadcrumbs to frontend format
+const transformedBreadcrumbs = computed(() => {
+    if (!props.breadcrumbs) return [];
+    return props.breadcrumbs.map(item => ({
+        title: item.label,
+        href: item.url || '#',
+    }));
+});
 
 const showRecoveryCodes = ref(false);
 
@@ -61,9 +88,11 @@ const downloadRecoveryCodes = () => {
     <Head :title="page.heading" />
 
     <SettingsLayout
+        :breadcrumbs="transformedBreadcrumbs"
         :navigation="clusterNavigation"
         :title="clusterTitle"
         :description="clusterDescription"
+        :loading="isLoading"
     >
         <section class="max-w-2xl space-y-6">
             <!-- Page Header -->
@@ -82,27 +111,27 @@ const downloadRecoveryCodes = () => {
                     <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 shrink-0">
                         <Shield class="h-5 w-5 text-primary" />
                     </div>
-                    <div>
-                        <h4 class="font-medium">Enable Two-Factor Authentication</h4>
+                    <div class="flex-1 text-start">
+                        <h4 class="font-medium">{{ trans('laravilt-auth::auth.profile.two_factor.enable_title') }}</h4>
                         <p class="text-sm text-muted-foreground mt-1">
-                            Secure your account with an additional layer of protection
+                            {{ trans('laravilt-auth::auth.profile.two_factor.description') }}
                         </p>
                     </div>
                 </div>
 
                 <ErrorProvider>
-                    <FormRenderer :schema="enableSchema" />
+                    <LaraviltForm :schema="enableSchema" />
                 </ErrorProvider>
             </div>
 
             <!-- Confirm Two-Factor Setup -->
-            <div v-if="currentStep === 'confirm'" class="space-y-6  pt-6">
-                <div class="space-y-1">
+            <div v-if="currentStep === 'confirm'" class="space-y-6 pt-6">
+                <div class="space-y-1 text-start">
                     <h4 class="font-medium">
-                        {{ qrCode ? 'Scan QR Code' : (twoFactorMethod === 'email' ? 'Check Your Email' : 'Enter Verification Code') }}
+                        {{ qrCode ? trans('laravilt-auth::auth.profile.two_factor.scan_qr_title') : (twoFactorMethod === 'email' ? trans('laravilt-auth::auth.profile.two_factor.check_email') : trans('laravilt-auth::auth.profile.two_factor.verify_code')) }}
                     </h4>
                     <p class="text-sm text-muted-foreground">
-                        {{ qrCode ? 'Scan this QR code with your authenticator app' : (twoFactorMethod === 'email' ? 'We sent a 6-digit verification code to your email address' : 'Check your email for the verification code') }}
+                        {{ qrCode ? trans('laravilt-auth::auth.profile.two_factor.scan_qr') : (twoFactorMethod === 'email' ? trans('laravilt-auth::auth.profile.two_factor.code_sent') : trans('laravilt-auth::auth.profile.two_factor.check_email_code')) }}
                     </p>
                 </div>
 
@@ -111,24 +140,24 @@ const downloadRecoveryCodes = () => {
 
                     <div v-if="secret" class="w-full rounded-lg bg-muted p-3">
                         <p class="text-center text-xs text-muted-foreground mb-1">
-                            Or enter this code manually
+                            {{ trans('laravilt-auth::auth.profile.two_factor.enter_manually') }}
                         </p>
-                        <p class="text-center font-mono text-sm font-medium">
+                        <p class="text-center font-mono text-sm font-medium" dir="ltr">
                             {{ secret }}
                         </p>
                     </div>
                 </div>
 
                 <div class="space-y-4 pt-6 border-t dark:border-neutral-900">
-                    <div class="space-y-1">
-                        <h4 class="font-medium">Verify Setup</h4>
+                    <div class="space-y-1 text-start">
+                        <h4 class="font-medium">{{ trans('laravilt-auth::auth.profile.two_factor.verify_setup') }}</h4>
                         <p class="text-sm text-muted-foreground">
-                            {{ qrCode ? 'Enter the 6-digit code from your authenticator app' : 'Enter the 6-digit code we sent to your email' }}
+                            {{ qrCode ? trans('laravilt-auth::auth.profile.two_factor.enter_code_app') : trans('laravilt-auth::auth.profile.two_factor.enter_code_email') }}
                         </p>
                     </div>
 
                     <ErrorProvider>
-                        <FormRenderer :schema="confirmSchema" />
+                        <LaraviltForm :schema="confirmSchema" />
                     </ErrorProvider>
                 </div>
             </div>
@@ -139,9 +168,9 @@ const downloadRecoveryCodes = () => {
                 <Alert class="border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950">
                     <CheckCircle2 class="h-4 w-4 text-green-600 dark:text-green-400" />
                     <AlertDescription class="text-green-800 dark:text-green-200">
-                        <span class="font-medium">Two-factor authentication is enabled</span>
+                        <span class="font-medium">{{ trans('laravilt-auth::auth.profile.two_factor.enabled') }}</span>
                         <span v-if="twoFactorMethod" class="block mt-1">
-                            Using {{ twoFactorMethod === 'totp' ? 'Authenticator App' : 'Email' }} method
+                            {{ trans('laravilt-auth::auth.profile.two_factor.using_method', { method: twoFactorMethod === 'totp' ? trans('laravilt-auth::auth.profile.two_factor.method_totp') : trans('laravilt-auth::auth.profile.two_factor.method_email') }) }}
                         </span>
                     </AlertDescription>
                 </Alert>
@@ -152,10 +181,10 @@ const downloadRecoveryCodes = () => {
                         <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-yellow-500/10 shrink-0">
                             <Key class="h-5 w-5 text-yellow-600 dark:text-yellow-500" />
                         </div>
-                        <div class="flex-1">
-                            <h4 class="font-medium">Recovery Codes</h4>
+                        <div class="flex-1 text-start">
+                            <h4 class="font-medium">{{ trans('laravilt-auth::auth.profile.two_factor.recovery_codes_title') }}</h4>
                             <p class="text-sm text-muted-foreground mt-1">
-                                Save these codes in a secure location. Each code can only be used once.
+                                {{ trans('laravilt-auth::auth.profile.two_factor.recovery_codes_desc') }}
                             </p>
                         </div>
                     </div>
@@ -171,7 +200,7 @@ const downloadRecoveryCodes = () => {
                     </div>
                     <div v-else class="rounded-lg border border-dashed p-8 text-center">
                         <p class="text-sm text-muted-foreground">
-                            Click below to view your recovery codes
+                            {{ trans('laravilt-auth::auth.profile.two_factor.click_to_view') }}
                         </p>
                     </div>
 
@@ -181,15 +210,15 @@ const downloadRecoveryCodes = () => {
                             variant="outline"
                             class="flex-1"
                         >
-                            {{ showRecoveryCodes ? 'Hide Codes' : 'Show Codes' }}
+                            {{ showRecoveryCodes ? trans('laravilt-auth::auth.profile.two_factor.hide_codes') : trans('laravilt-auth::auth.profile.two_factor.show_codes') }}
                         </Button>
                         <Button
                             v-if="showRecoveryCodes"
                             @click="downloadRecoveryCodes"
                             variant="outline"
                         >
-                            <Download class="h-4 w-4 mr-2" />
-                            Download
+                            <Download class="h-4 w-4 me-2" />
+                            {{ trans('laravilt-auth::auth.profile.two_factor.download') }}
                         </Button>
                     </div>
 
@@ -205,20 +234,20 @@ const downloadRecoveryCodes = () => {
                             :disabled="processing"
                             class="w-full"
                         >
-                            {{ processing ? 'Regenerating...' : 'Generate New Recovery Codes' }}
+                            {{ processing ? trans('laravilt-auth::auth.profile.two_factor.regenerating') : trans('laravilt-auth::auth.profile.two_factor.regenerate_codes') }}
                         </Button>
                     </Form>
                 </div>
 
                 <!-- Disable Two-Factor -->
-                <div class="space-y-4 border-t pt-6 dark:border-neutral-900">
-                    <h4 class="font-medium">Disable Two-Factor Authentication</h4>
+                <div class="space-y-4 border-t pt-6 dark:border-neutral-900 text-start">
+                    <h4 class="font-medium">{{ trans('laravilt-auth::auth.profile.two_factor.disable_title') }}</h4>
                     <p class="text-sm text-muted-foreground">
-                        This will remove the extra layer of security from your account
+                        {{ trans('laravilt-auth::auth.profile.two_factor.disable_desc') }}
                     </p>
 
                     <ErrorProvider>
-                        <FormRenderer :schema="disableSchema" />
+                        <LaraviltForm :schema="disableSchema" />
                     </ErrorProvider>
                 </div>
             </div>

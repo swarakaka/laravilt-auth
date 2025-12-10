@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import AuthLinks from './AuthLinks.vue';
 import SocialLogin from './SocialLogin.vue';
+import { useLocalization } from '@laravilt/support/composables';
+
+const { trans } = useLocalization();
 
 const props = defineProps<{
     forgotPasswordUrl?: string;
@@ -35,9 +38,9 @@ const props = defineProps<{
                     <span class="w-full border-t"></span>
                 </div>
                 <div class="relative flex justify-center text-xs uppercase">
-                    <span class="bg-background px-2 text-muted-foreground"
-                        >Or continue with</span
-                    >
+                    <span class="bg-background px-2 text-muted-foreground">{{
+                        trans('laravilt-auth::auth.social.or_continue_with')
+                    }}</span>
                 </div>
             </div>
 

@@ -7,16 +7,23 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Laravilt\Actions\Action;
 use Laravilt\Auth\Events\OtpFailed;
+use Laravilt\Auth\Events\OtpSent;
 use Laravilt\Auth\Events\OtpVerified;
+use Laravilt\Auth\Notifications\OtpNotification;
 use Laravilt\Forms\Components\PinInput;
 use Laravilt\Panel\Enums\PageLayout;
 use Laravilt\Panel\Pages\Page;
 
 class OTP extends Page
 {
-    protected static ?string $title = 'Verify Code';
+    protected static ?string $title = null;
 
     protected static bool $shouldRegisterNavigation = false;
+
+    public static function getTitle(): string
+    {
+        return __('laravilt-auth::auth.otp.title');
+    }
 
     public function create(Request $request, ...$parameters)
     {
@@ -30,17 +37,17 @@ class OTP extends Page
 
     public function getHeading(): string
     {
-        return 'Enter Verification Code';
+        return __('laravilt-auth::auth.otp.heading');
     }
 
     public function getSubheading(): ?string
     {
         $email = session('otp.email');
         if ($email) {
-            return 'Please enter the 6-digit code we sent to '.$email;
+            return __('laravilt-auth::auth.otp.subheading_email', ['email' => $email]);
         }
 
-        return 'Please enter the code we sent to your email.';
+        return __('laravilt-auth::auth.otp.subheading');
     }
 
     public function getLayout(): string
@@ -52,9 +59,8 @@ class OTP extends Page
     {
         return [
             PinInput::make('code')
-                ->label('Verification Code')
+                ->label(__('laravilt-auth::auth.fields.code'))
                 ->required()
-                ->autofocus()
                 ->tabindex(1)
                 ->length(6)
                 ->otp(),
@@ -65,12 +71,25 @@ class OTP extends Page
     {
         return [
             Action::make('verify-code')
-                ->label('Verify')
+                ->label(__('laravilt-auth::auth.otp.button'))
                 ->action(function (array $data) {
                     return $this->verifyCode($data);
                 })
                 ->preserveScroll(false)
                 ->preserveState(false),
+        ];
+    }
+
+    public function getBottomHook(): array|string|null
+    {
+        $panel = $this->getPanel();
+
+        return [
+            'component' => 'OtpResendHook',
+            'props' => [
+                'resendUrl' => route($panel->getId().'.otp.resend'),
+                'expiresAt' => session('otp.expires_at'),
+            ],
         ];
     }
 
@@ -173,13 +192,82 @@ class OTP extends Page
             ->with('status', 'Email verified successfully! Welcome aboard.');
     }
 
+    /**
+     * Resend OTP code.
+     */
+    public function resend(Request $request)
+    {
+        $panel = $this->getPanel();
+        $guard = $panel->getAuthGuard();
+
+        // Get user from session
+        $userId = session('otp.user_id');
+        $email = session('otp.email');
+
+        if (! $userId || ! $email) {
+            return back()->withErrors([
+                'code' => [__('laravilt-auth::auth.otp.session_expired')],
+            ]);
+        }
+
+        // Get the user model
+        $provider = config("auth.guards.{$guard}.provider");
+        $userModel = config("auth.providers.{$provider}.model", \App\Models\User::class);
+        $user = $userModel::find($userId);
+
+        if (! $user) {
+            return back()->withErrors([
+                'code' => [__('laravilt-auth::auth.otp.user_not_found')],
+            ]);
+        }
+
+        // Delete any existing OTP codes for this email
+        DB::table('otp_codes')
+            ->where('identifier', $email)
+            ->where('purpose', 'registration')
+            ->delete();
+
+        // Generate new OTP code
+        $code = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        $expiresAt = now()->addMinutes(10);
+
+        // Store OTP in database
+        DB::table('otp_codes')->insert([
+            'identifier' => $email,
+            'code' => $code,
+            'purpose' => 'registration',
+            'expires_at' => $expiresAt,
+            'verified' => 0,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        // Send OTP notification
+        $user->notify(new OtpNotification($code));
+
+        // Dispatch OTP sent event
+        OtpSent::dispatch($user, $code, 'registration', $expiresAt->toDateTime(), $panel->getId());
+
+        // Update session with new expiry time
+        session(['otp.expires_at' => $expiresAt->timestamp]);
+
+        notify(__('laravilt-auth::auth.otp.resent'));
+
+        return back();
+    }
+
     protected function getInertiaProps(): array
     {
         $panel = $this->getPanel();
+        $email = session('otp.email');
+        $expiresAt = session('otp.expires_at');
 
         return [
             'canLogin' => $panel->hasLogin(),
             'loginUrl' => $panel->hasLogin() ? route($panel->getId().'.login') : null,
+            'resendUrl' => route($panel->getId().'.otp.resend'),
+            'email' => $email,
+            'expiresAt' => $expiresAt,
         ];
     }
 }
