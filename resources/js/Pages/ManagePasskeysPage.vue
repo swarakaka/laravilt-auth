@@ -100,14 +100,13 @@ const handlePasskeyRegistration = async () => {
 
         console.log('Received WebAuthn options:', options);
 
-        // Convert base64url strings to ArrayBuffer
-        options.challenge = base64urlDecode(options.challenge);
-        options.user.id = base64urlDecode(options.user.id);
+        // Prepare options by converting strings to ArrayBuffers
+        const publicKeyOptions = prepareWebAuthnOptions(options);
 
         // Create credential using WebAuthn API
         console.log('Calling navigator.credentials.create...');
         const credential = await navigator.credentials.create({
-            publicKey: options
+            publicKey: publicKeyOptions
         }) as PublicKeyCredential;
 
         if (!credential) {
@@ -152,16 +151,40 @@ const handlePasskeyRegistration = async () => {
     }
 };
 
-// Helper functions for base64url encoding/decoding
-function base64urlDecode(base64url: string): ArrayBuffer {
-    const base64 = base64url.replace(/-/g, '+').replace(/_/g, '/');
+// Check if a string is a valid hex string
+function isHexString(str: string): boolean {
+    return /^[0-9a-fA-F]+$/.test(str) && str.length % 2 === 0;
+}
+
+// Convert hex string to Uint8Array
+function hexToUint8Array(hex: string): Uint8Array {
+    const bytes = new Uint8Array(hex.length / 2);
+    for (let i = 0; i < hex.length; i += 2) {
+        bytes[i / 2] = parseInt(hex.substring(i, i + 2), 16);
+    }
+    return bytes;
+}
+
+// Convert base64url, base64, or hex string to Uint8Array
+function stringToUint8Array(input: string): Uint8Array {
+    if (!input || typeof input !== 'string') {
+        throw new Error(`Invalid input: ${typeof input}`);
+    }
+
+    // Check if it's a hex string (like user.id from Laragear)
+    if (isHexString(input)) {
+        return hexToUint8Array(input);
+    }
+
+    // Otherwise treat as base64url/base64
+    const base64 = input.replace(/-/g, '+').replace(/_/g, '/');
     const padded = base64.padEnd(base64.length + (4 - base64.length % 4) % 4, '=');
     const binary = atob(padded);
     const bytes = new Uint8Array(binary.length);
     for (let i = 0; i < binary.length; i++) {
         bytes[i] = binary.charCodeAt(i);
     }
-    return bytes.buffer;
+    return bytes;
 }
 
 function arrayBufferToBase64url(buffer: ArrayBuffer): string {
@@ -172,6 +195,44 @@ function arrayBufferToBase64url(buffer: ArrayBuffer): string {
     }
     const base64 = btoa(binary);
     return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+}
+
+// Prepare WebAuthn creation options
+function prepareWebAuthnOptions(options: any): PublicKeyCredentialCreationOptions {
+    const prepared: PublicKeyCredentialCreationOptions = {
+        rp: options.rp,
+        challenge: stringToUint8Array(options.challenge),
+        user: {
+            ...options.user,
+            id: stringToUint8Array(options.user.id),
+        },
+        pubKeyCredParams: options.pubKeyCredParams,
+    };
+
+    if (options.timeout) {
+        prepared.timeout = options.timeout;
+    }
+
+    if (options.attestation) {
+        prepared.attestation = options.attestation;
+    }
+
+    if (options.authenticatorSelection) {
+        prepared.authenticatorSelection = options.authenticatorSelection;
+    }
+
+    // Handle excludeCredentials - convert each id to Uint8Array
+    if (options.excludeCredentials && Array.isArray(options.excludeCredentials)) {
+        prepared.excludeCredentials = options.excludeCredentials
+            .filter((cred: any) => cred && cred.id)
+            .map((cred: any) => ({
+                type: cred.type || 'public-key',
+                id: stringToUint8Array(cred.id),
+                transports: cred.transports,
+            }));
+    }
+
+    return prepared;
 }
 
 const removePasskey = (passkeyId: string) => {

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import Modal from '@laravilt/support/components/Modal.vue';
-import { usePasskeys } from '../../composables/usePasskeys';
+import { usePasskeys, prepareCreationOptions, arrayBufferToBase64url } from '../../composables/usePasskeys';
 import { useLocalization } from '@/composables/useLocalization';
 
 // Initialize localization
@@ -33,23 +33,32 @@ const handleRegisterPasskey = async () => {
         // Get registration options from the server
         const options = await passkeys.getRegistrationOptions();
 
+        console.log('Raw options from server:', JSON.stringify(options, null, 2));
+
+        // Prepare options by converting base64 strings to ArrayBuffers
+        const publicKeyOptions = prepareCreationOptions(options);
+
+        console.log('Prepared options:', publicKeyOptions);
+
         // Start WebAuthn registration
         const credential = await navigator.credentials.create({
-            publicKey: options.publicKey,
+            publicKey: publicKeyOptions,
         }) as PublicKeyCredential;
 
         if (!credential) {
             throw new Error('Failed to create credential');
         }
 
-        // Register the passkey with the server
+        const response = credential.response as AuthenticatorAttestationResponse;
+
+        // Register the passkey with the server using base64url encoding
         await passkeys.registerPasskey(passkeyName.value, {
             id: credential.id,
-            rawId: btoa(String.fromCharCode(...new Uint8Array(credential.rawId))),
+            rawId: arrayBufferToBase64url(credential.rawId),
             type: credential.type,
             response: {
-                clientDataJSON: btoa(String.fromCharCode(...new Uint8Array((credential.response as AuthenticatorAttestationResponse).clientDataJSON))),
-                attestationObject: btoa(String.fromCharCode(...new Uint8Array((credential.response as AuthenticatorAttestationResponse).attestationObject))),
+                clientDataJSON: arrayBufferToBase64url(response.clientDataJSON),
+                attestationObject: arrayBufferToBase64url(response.attestationObject),
             },
         });
 

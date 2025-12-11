@@ -40,11 +40,15 @@ class PasskeyController extends Controller
     {
         $validated = $request->validated();
 
-        // Save the credential with the provided name
-        $credential = $request->save();
+        // Save the credential - returns credential ID (string) in Laragear WebAuthn v3
+        $credentialId = $request->save();
+
+        // Get the credential model to update alias
+        $user = Auth::user();
+        $credential = $user->webAuthnCredentials()->where('id', $credentialId)->first();
 
         // Update credential alias with the user-provided name
-        if (isset($validated['name'])) {
+        if ($credential && isset($validated['name'])) {
             $credential->update(['alias' => $validated['name']]);
         }
 
@@ -54,8 +58,9 @@ class PasskeyController extends Controller
         // Dispatch passkey registered event
         if ($panel) {
             PasskeyRegistered::dispatch(
-                Auth::user(),
-                $credential->id,
+                $user,
+                $credentialId,
+                $validated['name'] ?? 'Passkey',
                 $panel->getId()
             );
         }
