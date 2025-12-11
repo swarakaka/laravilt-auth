@@ -1,0 +1,7 @@
+export { default as ConnectedAccountsPage } from './ConnectedAccountsPage.vue'
+export { default as ManageApiTokensPage } from './ManageApiTokensPage.vue'
+export { default as ManagePasskeysPage } from './ManagePasskeysPage.vue'
+export { default as ManageSessionsPage } from './ManageSessionsPage.vue'
+export { default as ManageTwoFactorPage } from './ManageTwoFactorPage.vue'
+export { default as ProfilePage } from './ProfilePage.vue'
+export { default as TwoFactorChallengePage } from './TwoFactorChallengePage.vue'

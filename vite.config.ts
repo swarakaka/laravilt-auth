@@ -26,7 +26,12 @@ export default defineConfig({
         'clsx',
         'class-variance-authority',
         '@vueuse/core',
-        /@laravilt\/.*/
+        /@laravilt\/.*/,
+        // External app-level imports (provided by consuming app)
+        /^@\/components\/.*/,
+        /^@\/routes.*/,
+        /^@\/composables\/.*/,
+        /^@\/lib\/.*/,
       ],
       output: {
         globals: {
