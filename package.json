@@ -1,6 +1,6 @@
 {
     "name": "@laravilt/auth",
-    "version": "1.0.3",
+    "version": "1.0.4",
     "description": "Complete authentication system with 8 methods: login, registration, OTP, 2FA, password reset, social auth, passkeys, and magic links. Includes 20+ events, custom pages, and multi-panel support.",
     "author": "Fady Mondy <info@3x1.io>",
     "license": "MIT",
