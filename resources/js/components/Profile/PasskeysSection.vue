@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import Modal from '@laravilt/support/components/Modal.vue';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { usePasskeys, prepareCreationOptions, arrayBufferToBase64url } from '../../composables/usePasskeys';
 import { useLocalization } from '@/composables/useLocalization';
 
@@ -13,6 +14,8 @@ const { trans } = useLocalization();
 
 const showModal = ref(false);
 const showRegisterModal = ref(false);
+const showDeleteConfirm = ref(false);
+const passkeyToDelete = ref<string | null>(null);
 const passkeys = usePasskeys();
 const passkeyName = ref<string>('');
 
@@ -70,16 +73,26 @@ const handleRegisterPasskey = async () => {
     }
 };
 
-const handleDeletePasskey = async (passkeyId: string) => {
-    if (!confirm(trans('profile.passkeys.confirm_delete'))) {
-        return;
-    }
+const confirmDeletePasskey = (passkeyId: string) => {
+    passkeyToDelete.value = passkeyId;
+    showDeleteConfirm.value = true;
+};
+
+const handleDeletePasskey = async () => {
+    if (!passkeyToDelete.value) return;
 
     try {
-        await passkeys.deletePasskey(passkeyId);
+        await passkeys.deletePasskey(passkeyToDelete.value);
+        showDeleteConfirm.value = false;
+        passkeyToDelete.value = null;
     } catch (error) {
         console.error('Failed to delete passkey:', error);
     }
+};
+
+const cancelDeletePasskey = () => {
+    showDeleteConfirm.value = false;
+    passkeyToDelete.value = null;
 };
 
 const handleCloseModal = () => {
@@ -147,7 +160,7 @@ const handleCloseRegisterModal = () => {
                     <Button
                         size="sm"
                         variant="ghost"
-                        @click="handleDeletePasskey(passkey.id)"
+                        @click="confirmDeletePasskey(passkey.id)"
                         :disabled="passkeys.loading.value"
                     >
                         {{ trans('common.delete') }}
@@ -204,4 +217,26 @@ const handleCloseRegisterModal = () => {
             </Button>
         </template>
     </Modal>
+
+    <!-- Delete Passkey Confirmation Dialog -->
+    <Dialog v-model:open="showDeleteConfirm">
+        <DialogContent class="sm:max-w-md">
+            <DialogHeader>
+                <DialogTitle>{{ trans('profile.passkeys.delete_title') }}</DialogTitle>
+                <DialogDescription>
+                    {{ trans('profile.passkeys.confirm_delete') }}
+                </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+                <Button variant="outline" @click="cancelDeletePasskey">{{ trans('common.cancel') }}</Button>
+                <Button
+                    variant="destructive"
+                    @click="handleDeletePasskey"
+                    :disabled="passkeys.loading.value"
+                >
+                    {{ passkeys.loading.value ? trans('common.deleting') : trans('common.delete') }}
+                </Button>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
 </template>

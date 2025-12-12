@@ -235,13 +235,30 @@ function prepareWebAuthnOptions(options: any): PublicKeyCredentialCreationOption
     return prepared;
 }
 
-const removePasskey = (passkeyId: string) => {
-    if (confirm(trans('laravilt-auth::auth.profile.passkeys.confirm_delete'))) {
-        router.delete(`${props.registerUrl.replace('/register', '')}/${passkeyId}`, {
+const showDeleteDialog = ref(false);
+const passkeyToDelete = ref<string | null>(null);
+
+const confirmDeletePasskey = (passkeyId: string) => {
+    passkeyToDelete.value = passkeyId;
+    showDeleteDialog.value = true;
+};
+
+const removePasskey = () => {
+    if (passkeyToDelete.value) {
+        router.delete(`${props.registerUrl.replace('/register', '')}/${passkeyToDelete.value}`, {
             preserveState: false,
             preserveScroll: false,
+            onFinish: () => {
+                showDeleteDialog.value = false;
+                passkeyToDelete.value = null;
+            }
         });
     }
+};
+
+const cancelDelete = () => {
+    showDeleteDialog.value = false;
+    passkeyToDelete.value = null;
 };
 </script>
 
@@ -272,12 +289,12 @@ const removePasskey = (passkeyId: string) => {
                         @click="showModal = true"
                         :disabled="!canRegister || passkeys.length >= maxPasskeys"
                     >
-                        <Plus class="h-4 w-4 mr-2" />
+                        <Plus class="h-4 w-4 me-2" />
                         {{ trans('laravilt-auth::auth.profile.passkeys.register_new') }}
                     </Button>
 
                     <DialogContent>
-                        <DialogHeader>
+                        <DialogHeader class="text-start">
                             <div class="flex items-center justify-center w-12 h-12 mb-4 rounded-full bg-primary/10">
                                 <Key class="h-6 w-6 text-primary" />
                             </div>
@@ -288,7 +305,7 @@ const removePasskey = (passkeyId: string) => {
                         </DialogHeader>
 
                         <div class="space-y-4 py-4">
-                            <div class="space-y-2">
+                            <div class="space-y-2 text-start">
                                 <Label for="passkey-name">{{ trans('laravilt-auth::auth.profile.passkeys.passkey_name') }}</Label>
                                 <Input
                                     id="passkey-name"
@@ -301,7 +318,7 @@ const removePasskey = (passkeyId: string) => {
                                 </p>
                             </div>
 
-                            <div class="flex justify-end gap-2">
+                            <div class="flex justify-end gap-2 rtl:flex-row-reverse">
                                 <Button
                                     variant="outline"
                                     @click="showModal = false"
@@ -394,7 +411,7 @@ const removePasskey = (passkeyId: string) => {
                             </div>
 
                             <Button
-                                @click="removePasskey(passkey.id)"
+                                @click="confirmDeletePasskey(passkey.id)"
                                 variant="ghost"
                                 size="sm"
                                 class="text-destructive hover:text-destructive"
@@ -406,5 +423,23 @@ const removePasskey = (passkeyId: string) => {
                 </Card>
             </div>
         </section>
+
+        <!-- Delete Passkey Confirmation Dialog -->
+        <Dialog v-model:open="showDeleteDialog">
+            <DialogContent>
+                <DialogHeader class="text-start">
+                    <DialogTitle>{{ trans('laravilt-auth::auth.profile.passkeys.delete_title') }}</DialogTitle>
+                    <DialogDescription>
+                        {{ trans('laravilt-auth::auth.profile.passkeys.confirm_delete') }}
+                    </DialogDescription>
+                </DialogHeader>
+                <div class="flex justify-end gap-2 pt-4 rtl:flex-row-reverse">
+                    <Button variant="outline" @click="cancelDelete">{{ trans('laravilt-auth::auth.common.cancel') }}</Button>
+                    <Button variant="destructive" @click="removePasskey">
+                        {{ trans('laravilt-auth::auth.common.delete') }}
+                    </Button>
+                </div>
+            </DialogContent>
+        </Dialog>
     </SettingsLayout>
 </template>

@@ -15,6 +15,9 @@ import LaraviltForm from '@laravilt/forms/components/Form.vue';
 import ErrorProvider from '@laravilt/forms/components/ErrorProvider.vue';
 import SettingsLayout from '@laravilt/panel/layouts/SettingsLayout.vue';
 import { Monitor, Smartphone, Tablet, MapPin, Clock, Trash2, LogOut } from 'lucide-vue-next';
+import { useLocalization } from '@/composables/useLocalization';
+
+const { trans } = useLocalization();
 
 const isLoading = ref(true);
 
@@ -73,10 +76,14 @@ const transformedBreadcrumbs = computed(() => {
 });
 
 const showLogoutOthersDialog = ref(false);
+const showRevokeDialog = ref(false);
+const sessionToRevoke = ref<string | null>(null);
 
 // Close dialog when sessions change (after logout)
 watch(() => props.sessions.length, () => {
     showLogoutOthersDialog.value = false;
+    showRevokeDialog.value = false;
+    sessionToRevoke.value = null;
 });
 
 const getDeviceIcon = (deviceType: string) => {
@@ -88,10 +95,25 @@ const getDeviceIcon = (deviceType: string) => {
     return icons[deviceType] || Monitor;
 };
 
-const revokeSession = (sessionId: string) => {
-    if (confirm('Are you sure you want to revoke this session?')) {
-        router.delete(`${props.revokeAction}/${sessionId}`);
+const confirmRevokeSession = (sessionId: string) => {
+    sessionToRevoke.value = sessionId;
+    showRevokeDialog.value = true;
+};
+
+const revokeSession = () => {
+    if (sessionToRevoke.value) {
+        router.delete(`${props.revokeAction}/${sessionToRevoke.value}`, {
+            onFinish: () => {
+                showRevokeDialog.value = false;
+                sessionToRevoke.value = null;
+            }
+        });
     }
+};
+
+const cancelRevoke = () => {
+    showRevokeDialog.value = false;
+    sessionToRevoke.value = null;
 };
 </script>
 
@@ -120,10 +142,10 @@ const revokeSession = (sessionId: string) => {
             <div v-if="!sessions || sessions.length === 0" class="flex flex-col items-center justify-center py-12">
                 <Monitor class="h-12 w-12 text-muted-foreground/50 mb-4" />
                 <p class="text-muted-foreground">
-                    No active sessions found.
+                    {{ trans('laravilt-auth::auth.profile.sessions.no_sessions') }}
                 </p>
                 <p class="text-sm text-muted-foreground">
-                    Session tracking requires database session driver.
+                    {{ trans('laravilt-auth::auth.profile.sessions.no_sessions_hint') }}
                 </p>
             </div>
 
@@ -145,7 +167,7 @@ const revokeSession = (sessionId: string) => {
                                         {{ session.device.browser }} on {{ session.device.platform }}
                                     </h4>
                                     <Badge v-if="session.is_current" variant="outline" class="bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-400 dark:border-green-900">
-                                        This Device
+                                        {{ trans('laravilt-auth::auth.profile.sessions.this_device') }}
                                     </Badge>
                                 </div>
 
@@ -156,7 +178,7 @@ const revokeSession = (sessionId: string) => {
                                     </div>
                                     <div class="flex items-center gap-1.5">
                                         <Clock class="h-3.5 w-3.5" />
-                                        <span>Active {{ session.last_activity_human }}</span>
+                                        <span>{{ trans('laravilt-auth::auth.profile.sessions.active') }} {{ session.last_activity_human }}</span>
                                     </div>
                                 </div>
                             </div>
@@ -164,7 +186,7 @@ const revokeSession = (sessionId: string) => {
 
                         <Button
                             v-if="!session.is_current"
-                            @click="revokeSession(session.id)"
+                            @click="confirmRevokeSession(session.id)"
                             variant="ghost"
                             size="sm"
                             class="text-destructive hover:text-destructive"
@@ -177,25 +199,25 @@ const revokeSession = (sessionId: string) => {
 
             <!-- Logout Other Sessions -->
             <div v-if="sessions && sessions.length > 1" class="pt-6 border-t">
-                <div class="mb-4">
-                    <h4 class="font-medium mb-1">Log Out Other Sessions</h4>
+                <div class="mb-4 text-start">
+                    <h4 class="font-medium mb-1">{{ trans('laravilt-auth::auth.profile.sessions.logout_others') }}</h4>
                     <p class="text-sm text-muted-foreground">
-                        Log out all other browser sessions across all your devices
+                        {{ trans('laravilt-auth::auth.profile.sessions.logout_others_desc') }}
                     </p>
                 </div>
 
                 <Dialog v-model:open="showLogoutOthersDialog">
                     <DialogTrigger as-child>
                         <Button variant="destructive" class="w-full">
-                            <LogOut class="h-4 w-4 mr-2" />
-                            Log Out Other Sessions
+                            <LogOut class="h-4 w-4 me-2" />
+                            {{ trans('laravilt-auth::auth.profile.sessions.logout_others') }}
                         </Button>
                     </DialogTrigger>
                     <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>Confirm Logout</DialogTitle>
+                        <DialogHeader class="text-start">
+                            <DialogTitle>{{ trans('laravilt-auth::auth.profile.sessions.confirm_logout') }}</DialogTitle>
                             <DialogDescription>
-                                Enter your password to log out all other browser sessions
+                                {{ trans('laravilt-auth::auth.profile.sessions.confirm_logout_desc') }}
                             </DialogDescription>
                         </DialogHeader>
 
@@ -214,7 +236,7 @@ const revokeSession = (sessionId: string) => {
                                         :disabled="processing"
                                         class="w-full"
                                     >
-                                        {{ processing ? 'Logging Out...' : 'Confirm and Log Out' }}
+                                        {{ processing ? trans('laravilt-auth::auth.profile.sessions.logging_out') : trans('laravilt-auth::auth.profile.sessions.confirm_and_logout') }}
                                     </Button>
                                 </div>
                             </ErrorProvider>
@@ -223,5 +245,23 @@ const revokeSession = (sessionId: string) => {
                 </Dialog>
             </div>
         </section>
+
+        <!-- Revoke Session Confirmation Dialog -->
+        <Dialog v-model:open="showRevokeDialog">
+            <DialogContent>
+                <DialogHeader class="text-start">
+                    <DialogTitle>{{ trans('laravilt-auth::auth.profile.sessions.revoke_session') }}</DialogTitle>
+                    <DialogDescription>
+                        {{ trans('laravilt-auth::auth.profile.sessions.revoke_session_confirm') }}
+                    </DialogDescription>
+                </DialogHeader>
+                <div class="flex justify-end gap-2 pt-4 rtl:flex-row-reverse">
+                    <Button variant="outline" @click="cancelRevoke">{{ trans('laravilt-auth::auth.common.cancel') }}</Button>
+                    <Button variant="destructive" @click="revokeSession">
+                        {{ trans('laravilt-auth::auth.profile.sessions.revoke') }}
+                    </Button>
+                </div>
+            </DialogContent>
+        </Dialog>
     </SettingsLayout>
 </template>

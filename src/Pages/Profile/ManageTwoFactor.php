@@ -277,6 +277,7 @@ class ManageTwoFactor extends Page
             ->url(route("{$panelId}.two-factor.enable"))
             ->preserveScroll(false)
             ->preserveState(false)
+            ->submit(true) // Validate form before executing
             ->requiresConfirmation(false);
     }
 
@@ -299,6 +300,7 @@ class ManageTwoFactor extends Page
             ->preserveState(false)
             ->label(__('laravilt-auth::auth.profile.two_factor.confirm_enable'))
             ->url(route("{$panelId}.two-factor.confirm"))
+            ->submit(true) // Validate form before executing
             ->requiresConfirmation(false);
     }
 

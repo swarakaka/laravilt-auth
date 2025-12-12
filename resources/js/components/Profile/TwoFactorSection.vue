@@ -186,7 +186,7 @@ const handleFinishRecoveryCodes = () => {
     </Card>
 
     <!-- Two-Factor Modal -->
-    <Modal v-model:open="showModal" :title="is2FAEnabled ? trans('profile.two_factor.disable_title') : trans('profile.two_factor.enable_title')" @close="handleCloseModal">
+    <Modal v-model:open="showModal" :title="is2FAEnabled ? trans('profile.two_factor.disable_title_short') : trans('profile.two_factor.enable_title_short')" @close="handleCloseModal">
         <!-- Step 1: Enable 2FA (select method and password using Form) -->
         <div v-if="twoFactorStep === 'enable' && twoFactorStatus?.schemas?.enable">
             <Form
@@ -200,7 +200,7 @@ const handleFinishRecoveryCodes = () => {
                 </div>
 
                 <div class="flex justify-end gap-2 pt-4">
-                    <Button variant="outline" type="button" @click="handleCloseModal">{{ trans('common.cancel') }}</Button>
+                    <button type="button" class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2" @click="handleCloseModal">{{ trans('common.cancel') }}</button>
                     <Button type="submit" :disabled="processing || twoFactor.loading.value">
                         {{ processing || twoFactor.loading.value ? trans('profile.two_factor.enabling') : trans('profile.two_factor.continue') }}
                     </Button>
@@ -238,7 +238,7 @@ const handleFinishRecoveryCodes = () => {
                 </div>
 
                 <div class="flex justify-end gap-2 pt-4">
-                    <Button variant="outline" type="button" @click="handleCloseModal">{{ trans('common.cancel') }}</Button>
+                    <button type="button" class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2" @click="handleCloseModal">{{ trans('common.cancel') }}</button>
                     <Button type="submit" :disabled="processing || twoFactor.loading.value">
                         {{ processing || twoFactor.loading.value ? trans('profile.two_factor.verifying') : trans('profile.two_factor.verify_code') }}
                     </Button>
@@ -268,7 +268,7 @@ const handleFinishRecoveryCodes = () => {
                 </div>
 
                 <div class="flex justify-end gap-2 pt-4">
-                    <Button variant="outline" type="button" @click="handleCloseModal">{{ trans('common.cancel') }}</Button>
+                    <button type="button" class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2" @click="handleCloseModal">{{ trans('common.cancel') }}</button>
                     <Button type="submit" :disabled="processing || twoFactor.loading.value">
                         {{ processing || twoFactor.loading.value ? trans('profile.two_factor.verifying') : trans('profile.two_factor.verify_code') }}
                     </Button>
@@ -317,7 +317,7 @@ const handleFinishRecoveryCodes = () => {
                 </div>
 
                 <div class="flex justify-end gap-2 pt-4">
-                    <Button variant="outline" type="button" @click="handleCloseModal">{{ trans('common.cancel') }}</Button>
+                    <button type="button" class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2" @click="handleCloseModal">{{ trans('common.cancel') }}</button>
                     <Button variant="destructive" type="submit" :disabled="processing || twoFactor.loading.value">
                         {{ processing || twoFactor.loading.value ? trans('profile.two_factor.enabling') : trans('profile.two_factor.disable') }}
                     </Button>

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import Modal from '@laravilt/support/components/Modal.vue';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import { useSessionManagement } from '../../composables/useSessionManagement';
 import { useLocalization } from '@/composables/useLocalization';
@@ -13,6 +14,8 @@ import { useLocalization } from '@/composables/useLocalization';
 const { trans } = useLocalization();
 
 const showModal = ref(false);
+const showLogoutConfirm = ref(false);
+const sessionToLogout = ref<string | null>(null);
 const sessionManagement = useSessionManagement();
 const sessionPassword = ref<string>('');
 
@@ -21,15 +24,27 @@ const handleOpenModal = async () => {
     await sessionManagement.fetchSessions();
 };
 
-const handleLogoutSession = async (sessionId: string) => {
-    if (!sessionPassword.value) return;
+const confirmLogoutSession = (sessionId: string) => {
+    sessionToLogout.value = sessionId;
+    showLogoutConfirm.value = true;
+};
+
+const handleLogoutSession = async () => {
+    if (!sessionPassword.value || !sessionToLogout.value) return;
 
     try {
-        await sessionManagement.logoutSession(sessionId, sessionPassword.value);
+        await sessionManagement.logoutSession(sessionToLogout.value, sessionPassword.value);
         sessionPassword.value = '';
+        showLogoutConfirm.value = false;
+        sessionToLogout.value = null;
     } catch (error) {
         console.error('Failed to logout session:', error);
     }
+};
+
+const cancelLogoutSession = () => {
+    showLogoutConfirm.value = false;
+    sessionToLogout.value = null;
 };
 
 const handleLogoutOthers = async () => {
@@ -104,7 +119,7 @@ const handleCloseModal = () => {
                         v-else
                         size="sm"
                         variant="ghost"
-                        @click="handleLogoutSession(session.id)"
+                        @click="confirmLogoutSession(session.id)"
                         :disabled="sessionManagement.loading.value"
                     >
                         {{ trans('common.logout') }}
@@ -115,31 +130,45 @@ const handleCloseModal = () => {
             <p v-if="sessionManagement.error.value" class="text-sm text-destructive">
                 {{ sessionManagement.error.value }}
             </p>
-
-            <Separator />
-
-            <div class="space-y-2">
-                <Label for="session-password">{{ trans('profile.sessions.confirm_password') }}</Label>
-                <Input
-                    id="session-password"
-                    v-model="sessionPassword"
-                    type="password"
-                    :placeholder="trans('profile.sessions.password_placeholder')"
-                />
-                <p class="text-xs text-muted-foreground">
-                    {{ trans('profile.sessions.password_hint') }}
-                </p>
-            </div>
         </div>
         <template #footer>
             <Button variant="outline" @click="handleCloseModal">{{ trans('common.close') }}</Button>
-            <Button
-                variant="destructive"
-                @click="handleLogoutOthers"
-                :disabled="sessionManagement.loading.value || !sessionPassword || sessionManagement.sessions.value.filter(s => !s.is_current).length === 0"
-            >
-                {{ sessionManagement.loading.value ? trans('profile.sessions.logging_out') : trans('profile.sessions.logout_others') }}
-            </Button>
         </template>
     </Modal>
+
+    <!-- Logout Session Confirmation Dialog -->
+    <Dialog v-model:open="showLogoutConfirm">
+        <DialogContent class="sm:max-w-md">
+            <DialogHeader>
+                <DialogTitle>{{ trans('profile.sessions.logout_session') }}</DialogTitle>
+                <DialogDescription>
+                    {{ trans('profile.sessions.logout_session_confirm') }}
+                </DialogDescription>
+            </DialogHeader>
+            <div class="space-y-4 py-4">
+                <div class="space-y-2">
+                    <Label for="logout-password">{{ trans('profile.sessions.confirm_password') }}</Label>
+                    <Input
+                        id="logout-password"
+                        v-model="sessionPassword"
+                        type="password"
+                        :placeholder="trans('profile.sessions.password_placeholder')"
+                    />
+                </div>
+                <p v-if="sessionManagement.error.value" class="text-sm text-destructive">
+                    {{ sessionManagement.error.value }}
+                </p>
+            </div>
+            <DialogFooter>
+                <Button variant="outline" @click="cancelLogoutSession">{{ trans('common.cancel') }}</Button>
+                <Button
+                    variant="destructive"
+                    @click="handleLogoutSession"
+                    :disabled="sessionManagement.loading.value || !sessionPassword"
+                >
+                    {{ sessionManagement.loading.value ? trans('profile.sessions.logging_out') : trans('common.logout') }}
+                </Button>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
 </template>
