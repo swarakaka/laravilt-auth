@@ -28,7 +28,7 @@ return new class extends Migration
             $table->timestamp('disabled_at')->nullable();
             $table->timestamps();
 
-            $table->index(['authenticatable_type', 'authenticatable_id']);
+            $table->index(['authenticatable_type', 'authenticatable_id'], 'webauthn_authenticatable_index');
         });
     }
 
