@@ -216,9 +216,24 @@ trait LaraviltUser
     /**
      * Get user's avatar URL.
      * Returns a default avatar if none is set.
+     *
+     * Note: If you're using the HasAvatar trait from laravilt/users package,
+     * that trait provides a more sophisticated implementation using Spatie Media Library.
+     * This method is only used if HasAvatar is not present.
      */
-    public function getAvatarUrl(): string
+    public function getAvatarUrlFromAuth(): string
     {
+        // Check if HasAvatar trait's method exists (it takes priority)
+        // This prevents collision when both traits are used
+        if (method_exists($this, 'getFirstMediaUrl')) {
+            $collection = config('laravilt-users.avatar.collection', 'avatar');
+            $media = $this->getFirstMediaUrl($collection);
+
+            if ($media) {
+                return $media;
+            }
+        }
+
         if (! empty($this->avatar)) {
             return $this->avatar;
         }
@@ -236,6 +251,16 @@ trait LaraviltUser
         $hash = md5(strtolower(trim($this->email ?? '')));
 
         return "https://www.gravatar.com/avatar/{$hash}?d=mp&s=200";
+    }
+
+    /**
+     * Get user's social avatar URL if available.
+     */
+    public function getSocialAvatarUrl(): ?string
+    {
+        return $this->socialAccounts()
+            ->whereNotNull('avatar')
+            ->value('avatar');
     }
 
     /**
